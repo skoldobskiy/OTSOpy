@@ -192,11 +192,11 @@ def FlightInputs(Data: FlightData) -> None:
 
                IOPTList.append(IOPTinput)
                WindArrayList.append(WindArray)
-                    
-               Data.windarraylist = WindArrayList
-               Data.IOPTlist = IOPTList
-               Data.Kplist = KpList
- 
+
+     Data.windarraylist = WindArrayList
+     Data.IOPTlist = IOPTList
+     Data.Kplist = KpList
+
      Data.rigidityarray = [Data.startrigidity,Data.endrigidity,Data.rigiditystep]
  
      Data.model = np.array([Internal,External,Bobon,bobtype])
