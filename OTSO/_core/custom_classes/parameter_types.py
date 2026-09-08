@@ -138,7 +138,22 @@ class MagFieldParams(TypedDict, total=False):
     • magnetopause: str = "Kobel"         # "Kobel", "Shue", "Lin", "None", "Sphere"
     • spheresize: float = 25              # Spherical boundary radius (Re)
     • AdaptiveExternalModel: bool = False # Auto-select external model
-    
+    • optimise_tsy: bool = False          # Use the faster implementation of the selected model.
+    #                                       Affects externalmag="TSY01", "TSY01S", "TSY04", or
+    #                                       "TSY96"; other models are unaffected by this flag.
+    #                                       False (default) uses the original, unoptimised code
+    #                                       path/structure. True uses a faster implementation
+    #                                       (redundant recomputation removed). Both settings are
+    #                                       numerically equivalent: latent bugs that used to exist
+    #                                       in the original code (an uninitialised variable in the
+    #                                       TSY01 tail-field warping term; an unreliable
+    #                                       uninitialised-variable cache guard in TSY01S's dipole
+    #                                       shielding term; a missing USE statement leaving three
+    #                                       variables uninitialised in TSY96's plasma-sheet term)
+    #                                       have been fixed in both the original and optimised
+    #                                       code paths, so this flag now only affects speed, not
+    #                                       results.
+
     Example: magfield_params = {"externalmag": "TSY01", "magnetopause": "Shue"}
     """
     internalmag: str  # Internal field model
@@ -148,11 +163,12 @@ class MagFieldParams(TypedDict, total=False):
     magnetopause: str # Magnetopause model
     spheresize: float # Spherical boundary size
     AdaptiveExternalModel: bool # Adaptive model selection
-    
+    optimise_tsy: bool # Use the optimised/bugfixed implementation (TSY01, TSY01S, TSY04, TSY96)
+
     # Default values
     DEFAULTS = {
         "internalmag": "IGRF", "externalmag": "TSY89c", "boberg": False, "bobergtype": "EXTENSION",
-        "magnetopause": "Kobel", "spheresize": 25, "AdaptiveExternalModel": False
+        "magnetopause": "Kobel", "spheresize": 25, "AdaptiveExternalModel": False, "optimise_tsy": False
     } # type: ignore
 
 
@@ -287,22 +303,36 @@ class DataRetrievalParams(TypedDict, total=False):
 
 class CustomFieldParams(TypedDict, total=False):
     """Parameters for custom magnetic field models.
-    
+
     Example usage:
         custom = {"g": [1.0, 2.0, 3.0], "MHDfile": "/path/to/mhd_data.txt"}
         cutoff("DOMC", custom_field_params=custom)
-        
+
     For advanced users requiring custom field configurations.
+
+    MHDgridtype controls how the MHD grid (MHDfile) is looked up:
+    • "auto" (default): detect per-axis spacing from the grid itself and
+      pick the fastest correct method automatically.
+    • "uniform": force the fixed-spacing fast path. Only give this if every
+      axis in MHDfile really is evenly spaced - forcing it on a grid that
+      isn't gives silently wrong results.
+    • "stretched": force the general (binary-search) path. Needed for a
+      grid whose resolution varies with position (e.g. finer near Earth,
+      coarser further out) - correct for uniform grids too, just not quite
+      as fast as the "uniform" fast path.
     """
     g: Optional[Sequence[float]]  # Gauss coefficients g
     h: Optional[Sequence[float]]  # Gauss coefficients h
     MHDfile: Optional[str]        # MHD simulation file path
     MHDcoordsys: Optional[str]    # MHD coordinate system
+    MHDgridtype: str              # "auto" (default), "uniform", or "stretched" -
+                                   # see MagFieldParams docs / OTSO docstrings for details
     max_degree: Optional[int]
-    
+
     # Default values
     DEFAULTS = {
-        "g": None, "h": None, "MHDfile": None, "MHDcoordsys": None, "max_degree": 13
+        "g": None, "h": None, "MHDfile": None, "MHDcoordsys": None,
+        "MHDgridtype": "auto", "max_degree": 13
     } # type: ignore
 
 

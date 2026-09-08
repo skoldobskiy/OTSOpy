@@ -9,20 +9,20 @@ import weakref
 class Middleman(f90wrap.runtime.FortranModule):
     """
     Module middleman
-    Defined at MiddleMan.f95 lines 1-1152
+    Defined at MiddleMan.f95 lines 1-1182
     """
     @f90wrap.runtime.register_class("MiddleMan.FortranData")
     class FortranData(f90wrap.runtime.FortranDerivedType):
         """
         Type(name=fortrandata)
-        Defined at MiddleMan.f95 lines 4-37
+        Defined at MiddleMan.f95 lines 4-38
         """
         def __init__(self, handle=None):
             """
             Automatically generated constructor for fortrandata
             
             self = Fortrandata()
-            Defined at MiddleMan.f95 lines 4-37
+            Defined at MiddleMan.f95 lines 4-38
             
             Returns
             -------
@@ -522,6 +522,18 @@ class Middleman(f90wrap.runtime.FortranModule):
         def trapdistcheck(self, trapdistcheck):
             _MiddleMan.f90wrap_fortrandata__set__trapdistcheck(self._handle, trapdistcheck)
         
+        @property
+        def optimise_tsy(self):
+            """
+            Element optimise_tsy ftype=logical pytype=bool
+            Defined at MiddleMan.f95 line 38
+            """
+            return _MiddleMan.f90wrap_fortrandata__get__optimise_tsy(self._handle)
+        
+        @optimise_tsy.setter
+        def optimise_tsy(self, optimise_tsy):
+            _MiddleMan.f90wrap_fortrandata__set__optimise_tsy(self._handle, optimise_tsy)
+        
         def __str__(self):
             ret = ['<fortrandata>{\n']
             ret.append('    startrigidity : ')
@@ -588,6 +600,8 @@ class Middleman(f90wrap.runtime.FortranModule):
             ret.append(repr(self.totalbetacheck))
             ret.append(',\n    trapdistcheck : ')
             ret.append(repr(self.trapdistcheck))
+            ret.append(',\n    optimise_tsy : ')
+            ret.append(repr(self.optimise_tsy))
             ret.append('}')
             return ''.join(ret)
         
@@ -598,14 +612,14 @@ class Middleman(f90wrap.runtime.FortranModule):
     class ParticleData(f90wrap.runtime.FortranDerivedType):
         """
         Type(name=particledata)
-        Defined at MiddleMan.f95 lines 39-94
+        Defined at MiddleMan.f95 lines 40-95
         """
         def __init__(self, handle=None):
             """
             Automatically generated constructor for particledata
             
             self = Particledata()
-            Defined at MiddleMan.f95 lines 39-94
+            Defined at MiddleMan.f95 lines 40-95
             
             Returns
             -------
@@ -634,7 +648,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def velocity(self):
             """
             Element velocity ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 41
+            Defined at MiddleMan.f95 line 42
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__velocity(self._handle)
@@ -663,7 +677,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def geovelocity(self):
             """
             Element geovelocity ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 42
+            Defined at MiddleMan.f95 line 43
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__geovelocity(self._handle)
@@ -693,7 +707,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def positionarray(self):
             """
             Element positionarray ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 43
+            Defined at MiddleMan.f95 line 44
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__positionarray(self._handle)
@@ -723,7 +737,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def oldpositionarray(self):
             """
             Element oldpositionarray ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 47
+            Defined at MiddleMan.f95 line 48
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__oldpositionarray(self._handle)
@@ -753,7 +767,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def velocityarray(self):
             """
             Element velocityarray ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 51
+            Defined at MiddleMan.f95 line 52
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__velocityarray(self._handle)
@@ -783,7 +797,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def oldvelocityarray(self):
             """
             Element oldvelocityarray ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 54
+            Defined at MiddleMan.f95 line 55
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__oldvelocityarray(self._handle)
@@ -813,7 +827,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def m(self):
             """
             Element m ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 58
+            Defined at MiddleMan.f95 line 59
             """
             return _MiddleMan.f90wrap_particledata__get__m(self._handle)
         
@@ -825,7 +839,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def q(self):
             """
             Element q ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 59
+            Defined at MiddleMan.f95 line 60
             """
             return _MiddleMan.f90wrap_particledata__get__q(self._handle)
         
@@ -837,7 +851,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def z(self):
             """
             Element z ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 60
+            Defined at MiddleMan.f95 line 61
             """
             return _MiddleMan.f90wrap_particledata__get__z(self._handle)
         
@@ -849,7 +863,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def a(self):
             """
             Element a ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 61
+            Defined at MiddleMan.f95 line 62
             """
             return _MiddleMan.f90wrap_particledata__get__a(self._handle)
         
@@ -861,7 +875,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def lat(self):
             """
             Element lat ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 62
+            Defined at MiddleMan.f95 line 63
             """
             return _MiddleMan.f90wrap_particledata__get__lat(self._handle)
         
@@ -873,7 +887,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def long_bn(self):
             """
             Element long_bn ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 63
+            Defined at MiddleMan.f95 line 64
             """
             return _MiddleMan.f90wrap_particledata__get__long_bn(self._handle)
         
@@ -885,7 +899,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def e_0(self):
             """
             Element e_0 ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 64
+            Defined at MiddleMan.f95 line 65
             """
             return _MiddleMan.f90wrap_particledata__get__e_0(self._handle)
         
@@ -897,7 +911,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def r(self):
             """
             Element r ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 65
+            Defined at MiddleMan.f95 line 66
             """
             return _MiddleMan.f90wrap_particledata__get__r(self._handle)
         
@@ -909,7 +923,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def lambda_(self):
             """
             Element lambda_ ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 66
+            Defined at MiddleMan.f95 line 67
             """
             return _MiddleMan.f90wrap_particledata__get__lambda_(self._handle)
         
@@ -921,7 +935,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def secondtotal(self):
             """
             Element secondtotal ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 68
+            Defined at MiddleMan.f95 line 69
             """
             return _MiddleMan.f90wrap_particledata__get__secondtotal(self._handle)
         
@@ -933,7 +947,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def oldsecondtotal(self):
             """
             Element oldsecondtotal ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 69
+            Defined at MiddleMan.f95 line 70
             """
             return _MiddleMan.f90wrap_particledata__get__oldsecondtotal(self._handle)
         
@@ -946,7 +960,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def timeelapsed(self):
             """
             Element timeelapsed ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 70
+            Defined at MiddleMan.f95 line 71
             """
             return _MiddleMan.f90wrap_particledata__get__timeelapsed(self._handle)
         
@@ -958,7 +972,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def h(self):
             """
             Element h ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 72
+            Defined at MiddleMan.f95 line 73
             """
             return _MiddleMan.f90wrap_particledata__get__h(self._handle)
         
@@ -970,7 +984,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def hold(self):
             """
             Element hold ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 73
+            Defined at MiddleMan.f95 line 74
             """
             return _MiddleMan.f90wrap_particledata__get__hold(self._handle)
         
@@ -982,7 +996,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def lasth(self):
             """
             Element lasth ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 74
+            Defined at MiddleMan.f95 line 75
             """
             return _MiddleMan.f90wrap_particledata__get__lasth(self._handle)
         
@@ -994,7 +1008,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def firsth(self):
             """
             Element firsth ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 75
+            Defined at MiddleMan.f95 line 76
             """
             return _MiddleMan.f90wrap_particledata__get__firsth(self._handle)
         
@@ -1006,7 +1020,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def maxgyropercent(self):
             """
             Element maxgyropercent ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 76
+            Defined at MiddleMan.f95 line 77
             """
             return _MiddleMan.f90wrap_particledata__get__maxgyropercent(self._handle)
         
@@ -1019,7 +1033,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def cachedbfield(self):
             """
             Element cachedbfield ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 79
+            Defined at MiddleMan.f95 line 80
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__cachedbfield(self._handle)
@@ -1049,7 +1063,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def cachedbfieldvalid(self):
             """
             Element cachedbfieldvalid ftype=logical pytype=bool
-            Defined at MiddleMan.f95 line 80
+            Defined at MiddleMan.f95 line 81
             """
             return _MiddleMan.f90wrap_particledata__get__cachedbfieldvalid(self._handle)
         
@@ -1062,7 +1076,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def distancetraveled(self):
             """
             Element distancetraveled ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 81
+            Defined at MiddleMan.f95 line 82
             """
             return _MiddleMan.f90wrap_particledata__get__distancetraveled(self._handle)
         
@@ -1075,7 +1089,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def mdp(self):
             """
             Element mdp ftype=real(8) pytype=float array
-            Defined at MiddleMan.f95 line 83
+            Defined at MiddleMan.f95 line 84
             """
             array_ndim, array_type, array_shape, array_handle = \
                 _MiddleMan.f90wrap_particledata__array__mdp(self._handle)
@@ -1104,7 +1118,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def betaerror(self):
             """
             Element betaerror ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 84
+            Defined at MiddleMan.f95 line 85
             """
             return _MiddleMan.f90wrap_particledata__get__betaerror(self._handle)
         
@@ -1116,7 +1130,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def originalbeta(self):
             """
             Element originalbeta ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 85
+            Defined at MiddleMan.f95 line 86
             """
             return _MiddleMan.f90wrap_particledata__get__originalbeta(self._handle)
         
@@ -1128,7 +1142,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def currentbeta(self):
             """
             Element currentbeta ftype=real(8) pytype=float32
-            Defined at MiddleMan.f95 line 86
+            Defined at MiddleMan.f95 line 87
             """
             return _MiddleMan.f90wrap_particledata__get__currentbeta(self._handle)
         
@@ -1140,7 +1154,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def finalstep(self):
             """
             Element finalstep ftype=logical pytype=bool
-            Defined at MiddleMan.f95 line 88
+            Defined at MiddleMan.f95 line 89
             """
             return _MiddleMan.f90wrap_particledata__get__finalstep(self._handle)
         
@@ -1152,7 +1166,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def mindistcheck(self):
             """
             Element mindistcheck ftype=logical pytype=bool
-            Defined at MiddleMan.f95 line 89
+            Defined at MiddleMan.f95 line 90
             """
             return _MiddleMan.f90wrap_particledata__get__mindistcheck(self._handle)
         
@@ -1164,7 +1178,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def escaped(self):
             """
             Element escaped ftype=logical pytype=bool
-            Defined at MiddleMan.f95 line 90
+            Defined at MiddleMan.f95 line 91
             """
             return _MiddleMan.f90wrap_particledata__get__escaped(self._handle)
         
@@ -1176,7 +1190,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def totalbetachecktrigger(self):
             """
             Element totalbetachecktrigger ftype=logical pytype=bool
-            Defined at MiddleMan.f95 line 91
+            Defined at MiddleMan.f95 line 92
             """
             return _MiddleMan.f90wrap_particledata__get__totalbetachecktrigger(self._handle)
         
@@ -1189,7 +1203,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def steps(self):
             """
             Element steps ftype=integer(8) pytype=int32
-            Defined at MiddleMan.f95 line 92
+            Defined at MiddleMan.f95 line 93
             """
             return _MiddleMan.f90wrap_particledata__get__steps(self._handle)
         
@@ -1201,7 +1215,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def counter(self):
             """
             Element counter ftype=integer(4) pytype=int32
-            Defined at MiddleMan.f95 line 93
+            Defined at MiddleMan.f95 line 94
             """
             return _MiddleMan.f90wrap_particledata__get__counter(self._handle)
         
@@ -1213,7 +1227,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         def termtype(self):
             """
             Element termtype ftype=integer(4) pytype=int32
-            Defined at MiddleMan.f95 line 94
+            Defined at MiddleMan.f95 line 95
             """
             return _MiddleMan.f90wrap_particledata__get__termtype(self._handle)
         
@@ -1311,7 +1325,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         cutoff(self, g8, h8, rigidities, allowed)
-        Defined at MiddleMan.f95 lines 106-230
+        Defined at MiddleMan.f95 lines 107-232
         
         Parameters
         ----------
@@ -1333,7 +1347,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         cone(self, g8, h8, rigidities, allowed, asymlat, asymlong)
-        Defined at MiddleMan.f95 lines 243-381
+        Defined at MiddleMan.f95 lines 245-384
         
         Parameters
         ----------
@@ -1358,7 +1372,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         
         filter, alat, along = trajectory_full(self, g8, h8, rigidity, trajectoryfile, \
             trajectoryfilelen)
-        Defined at MiddleMan.f95 lines 396-538
+        Defined at MiddleMan.f95 lines 399-542
         
         Parameters
         ----------
@@ -1390,7 +1404,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         trajectory(self, g8, h8, rigidities, rigiditieslen, allowed, asymlat, asymlong)
-        Defined at MiddleMan.f95 lines 542-679
+        Defined at MiddleMan.f95 lines 546-684
         
         Parameters
         ----------
@@ -1415,7 +1429,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         transmission(self, g8, h8, rigidities, transmissions)
-        Defined at MiddleMan.f95 lines 690-835
+        Defined at MiddleMan.f95 lines 695-841
         
         Parameters
         ----------
@@ -1437,7 +1451,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         magstrength(pin, data, coordin, coordout, g8, h8, bfield)
-        Defined at MiddleMan.f95 lines 844-900
+        Defined at MiddleMan.f95 lines 850-907
         
         Parameters
         ----------
@@ -1457,7 +1471,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         interface_call=False):
         """
         coordtrans(pin, data, coordin, coordout, g8, h8, pout)
-        Defined at MiddleMan.f95 lines 909-934
+        Defined at MiddleMan.f95 lines 916-941
         
         Parameters
         ----------
@@ -1480,7 +1494,7 @@ class Middleman(f90wrap.runtime.FortranModule):
         ------------------------------------------------------------------
         
         fieldtrace(self, filename, filenamelen, g8, h8)
-        Defined at MiddleMan.f95 lines 943-1067
+        Defined at MiddleMan.f95 lines 950-1075
         
         Parameters
         ----------
@@ -1497,12 +1511,13 @@ class Middleman(f90wrap.runtime.FortranModule):
     def mhdstartupsorted(xu, yu, zu, mhdposition_in, mhdb_in, nx_split, ny_split, \
         nz_split, mix, max_bn, miy, may, miz, maz, region_order_in, start_x, end_x, \
         start_y, end_y, start_z, end_z, num_regions, xulen, yulen, zulen, \
-        interface_call=False):
+        uniform_grid, interface_call=False):
         """
         mhdstartupsorted(xu, yu, zu, mhdposition_in, mhdb_in, nx_split, ny_split, \
             nz_split, mix, max_bn, miy, may, miz, maz, region_order_in, start_x, end_x, \
-            start_y, end_y, start_z, end_z, num_regions, xulen, yulen, zulen)
-        Defined at MiddleMan.f95 lines 1073-1120
+            start_y, end_y, start_z, end_z, num_regions, xulen, yulen, zulen, \
+            uniform_grid)
+        Defined at MiddleMan.f95 lines 1081-1150
         
         Parameters
         ----------
@@ -1531,20 +1546,22 @@ class Middleman(f90wrap.runtime.FortranModule):
         xulen : int32
         yulen : int32
         zulen : int32
+        uniform_grid : bool
         """
         _MiddleMan.f90wrap_middleman__mhdstartupsorted(xu=xu, yu=yu, zu=zu, \
             mhdposition_in=mhdposition_in, mhdb_in=mhdb_in, nx_split=nx_split, \
             ny_split=ny_split, nz_split=nz_split, mix=mix, max_bn=max_bn, miy=miy, \
             may=may, miz=miz, maz=maz, region_order_in=region_order_in, start_x=start_x, \
             end_x=end_x, start_y=start_y, end_y=end_y, start_z=start_z, end_z=end_z, \
-            num_regions=num_regions, xulen=xulen, yulen=yulen, zulen=zulen)
+            num_regions=num_regions, xulen=xulen, yulen=yulen, zulen=zulen, \
+            uniform_grid=uniform_grid)
     
     @staticmethod
     def gse2gswtsy15(date, position_gse, wind, gotso, hotso, glen, position_gsw, \
         interface_call=False):
         """
         gse2gswtsy15(date, position_gse, wind, gotso, hotso, glen, position_gsw)
-        Defined at MiddleMan.f95 lines 1122-1152
+        Defined at MiddleMan.f95 lines 1152-1182
         
         Parameters
         ----------

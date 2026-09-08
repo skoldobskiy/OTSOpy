@@ -124,6 +124,7 @@ def cutoff(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -246,6 +247,7 @@ def cutoff(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [cutoff_dataframe, asymptotic_dataframe, transmission_dataframe, readme_text]
@@ -399,6 +401,7 @@ def cone(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -512,6 +515,7 @@ def cone(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [cone_dataframe, cutoff_dataframe, readme_text]
@@ -666,6 +670,7 @@ def planet(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -800,6 +805,7 @@ def planet(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [planet_dataframe, asymptotic_dataframe, transmission_dataframe, readme_text]
@@ -938,6 +944,7 @@ def trajectory(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
         
         solar_wind_params (SolarWindParams): Solar wind parameters.
 
@@ -1034,6 +1041,7 @@ def trajectory(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [trajectory_data, readme_text]
@@ -1172,6 +1180,7 @@ def flight(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -1296,6 +1305,7 @@ def flight(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [flight_df, asymptotic_df, transmission_df, readme_text, input_dataframe]
@@ -1455,6 +1465,7 @@ def trace(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
         
         solar_wind_params (SolarWindParams): Solar wind parameters.
 
@@ -1529,6 +1540,7 @@ def trace(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [trace_data, readme_text]
@@ -1651,7 +1663,8 @@ def magfield(
             - `externalmag` (`str`, default="TSY89c"): "NONE", "TSY87short", "TSY87long", "TSY89a", "TSY96", "TSY01", "TSY01S", "TSY04", "TSY89c", "TSY15N", "TSY15B", "TA16_RBF", "TSY89_refit", "MHD"
             - `boberg` (`bool`, default=False): Enable Boberg extension
             - `bobergtype` (`str`, default="EXTENSION"): "EXTENSION", "CONTINUOUS", "DST_DEPENDENT", "DST_MIDPOINT"
-        
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
+
         solar_wind_params (SolarWindParams): Solar wind parameters (optional for auto-retrieval).
 
             Available keys:
@@ -1721,6 +1734,7 @@ def magfield(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [magfield_dataframe, readme_text]
@@ -1847,6 +1861,7 @@ def transmission(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -1957,6 +1972,7 @@ def transmission(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [transmission_df, readme_text]
@@ -2107,6 +2123,7 @@ def skymap(
             - `magnetopause` (`str`, default="Kobel"): "NONE", "Kobel", "Sibeck", "Lin", "Sphere", "aFormisano"
             - `spheresize` (`float`, default=25): Spherical boundary radius (Re)
             - `AdaptiveExternalModel` (`bool`, default=False): Auto-select external model
+            - `optimise_tsy` (`bool`, default=False): Use the faster implementation of the selected Tsyganenko model (affects externalmag="TSY01", "TSY01S", "TSY04", or "TSY96"; other models are unaffected by this flag). Both settings give numerically identical results (all known bugs are fixed in both); True is just faster
 
         rigidity_params (RigidityParams): Rigidity scanning.
 
@@ -2220,6 +2237,7 @@ def skymap(
             - `max_degree` (`int`, default=13): Max degree of spherical harmonic expansion
             - `MHDfile` (`str`, default=None): MHD simulation file
             - `MHDcoordsys` (`str`, default=None): MHD coordinate system
+            - `MHDgridtype` (`str`, default="auto"): How the MHD grid is looked up - "auto" detects per-axis spacing automatically, "uniform" forces the fast fixed-spacing path (only correct if every axis really is evenly spaced), "stretched" forces the general path needed for a grid whose resolution varies with position (e.g. finer near Earth)
 
     Returns:
         list: [skymap_dataframe, readme_text]

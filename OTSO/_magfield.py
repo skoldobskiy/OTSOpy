@@ -68,6 +68,7 @@ def magfield(Locations, **kwargs):
        internalmag = kwargs['internalmag'],
        externalmag = kwargs['externalmag'],
        boberg = kwargs['boberg'],
+       optimise_tsy = kwargs['optimise_tsy'],
        bobergtype = kwargs['bobergtype'],
        inputcoord = kwargs['inputcoord'],
        coordout = kwargs['coordout'],
@@ -76,6 +77,7 @@ def magfield(Locations, **kwargs):
        corenum = kwargs['corenum'],
        MHDfile = kwargs['MHDfile'],
        MHDcoordsys = kwargs['MHDcoordsys'],
+       MHDgridtype = kwargs['MHDgridtype'],
        Verbose = kwargs['Verbose'],
        max_degree = kwargs["max_degree"]
    )

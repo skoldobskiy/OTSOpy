@@ -1035,6 +1035,9 @@ C
        REAL*8 x,y,z,sps,hx,hy,hz
 C
          REAL*8, DIMENSION(48) :: A
+         REAL*8, DIMENSION(3) :: PA,QA,CYPIA,SYPIA,CYQIA,SYQIA
+         REAL*8, DIMENSION(3) :: RA,SA,SZRKA,CZRKA,CZSKA,SZSKA
+         REAL*8, DIMENSION(3,3) :: SQPRA,SQQSA,EPRA,EQSA
 C
           CPS=DSQRT(1.D0-SPS**2)
           S3PS=4.D0*CPS**2-1.D0   !  THIS IS SIN(3*PS)/SIN(PS)
@@ -1044,27 +1047,57 @@ C
            HZ=0.D0
            L=0
 C
+C  The (I,K)-dependent trig/exp terms below do not depend on M, but the
+C  original code recomputed them once per M=1,2 pass. Precomputing them
+C  once here (instead of twice) is a pure speed optimisation; the
+C  arithmetic and evaluation order for each term are unchanged.
+C
+           DO 5 I=1,3
+             PA(I)=A(36+I)
+             QA(I)=A(42+I)
+             CYPIA(I)=DCOS(Y/PA(I))
+             CYQIA(I)=DCOS(Y/QA(I))
+             SYPIA(I)=DSIN(Y/PA(I))
+             SYQIA(I)=DSIN(Y/QA(I))
+  5        ENDDO
+           DO 6 K=1,3
+             RA(K)=A(39+K)
+             SA(K)=A(45+K)
+             SZRKA(K)=DSIN(Z/RA(K))
+             CZSKA(K)=DCOS(Z/SA(K))
+             CZRKA(K)=DCOS(Z/RA(K))
+             SZSKA(K)=DSIN(Z/SA(K))
+  6        ENDDO
+           DO 7 I=1,3
+             DO 8 K=1,3
+               SQPRA(I,K)=DSQRT(1.D0/PA(I)**2+1.D0/RA(K)**2)
+               SQQSA(I,K)=DSQRT(1.D0/QA(I)**2+1.D0/SA(K)**2)
+               EPRA(I,K)=DEXP(X*SQPRA(I,K))
+               EQSA(I,K)=DEXP(X*SQQSA(I,K))
+  8          ENDDO
+  7        ENDDO
+C
            DO 1 M=1,2     !    M=1 IS FOR THE 1ST SUM ("PERP." SYMMETRY)
 C                           AND M=2 IS FOR THE SECOND SUM ("PARALL." SYMMETRY)
              DO 2 I=1,3
-                  P=A(36+I)
-                  Q=A(42+I)
-                  CYPI=DCOS(Y/P)
-                  CYQI=DCOS(Y/Q)
-                  SYPI=DSIN(Y/P)
-                  SYQI=DSIN(Y/Q)
+                  P=PA(I)
+                  Q=QA(I)
+                  CYPI=CYPIA(I)
+                  CYQI=CYQIA(I)
+                  SYPI=SYPIA(I)
+                  SYQI=SYQIA(I)
 C
               DO 3 K=1,3
-                   R=A(39+K)
-                   S=A(45+K)
-                   SZRK=DSIN(Z/R)
-                   CZSK=DCOS(Z/S)
-                   CZRK=DCOS(Z/R)
-                   SZSK=DSIN(Z/S)
-                     SQPR=DSQRT(1.D0/P**2+1.D0/R**2)
-                     SQQS=DSQRT(1.D0/Q**2+1.D0/S**2)
-                        EPR=DEXP(X*SQPR)
-                        EQS=DEXP(X*SQQS)
+                   R=RA(K)
+                   S=SA(K)
+                   SZRK=SZRKA(K)
+                   CZSK=CZSKA(K)
+                   CZRK=CZRKA(K)
+                   SZSK=SZSKA(K)
+                     SQPR=SQPRA(I,K)
+                     SQQS=SQQSA(I,K)
+                        EPR=EPRA(I,K)
+                        EQS=EQSA(I,K)
 C
                    DO 4 N=1,2  ! N=1 IS FOR THE FIRST PART OF EACH COEFFICIENT
 C                                  AND N=2 IS FOR THE SECOND ONE
@@ -1625,6 +1658,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 c
          USE TSY96_Coord21
          USE TSY96_RHDR
+         USE TSY96_DX1
          IMPLICIT  REAL * 8  (A - H, O - Z)
 c
          REAL*8, DIMENSION(4) :: XI
@@ -1781,6 +1815,9 @@ C
 C
       REAL*8, DIMENSION(80) :: A
       REAL*8, DIMENSION(4) :: P1,R1,Q1,S1,RP,RR,RQ,RS
+      REAL*8, DIMENSION(4) :: CYPIA,SYPIA,CYQIA,SYQIA
+      REAL*8, DIMENSION(4) :: SZRKA,CZRKA,CZSKA,SZSKA
+      REAL*8, DIMENSION(4,4) :: SQPRA,SQQSA,EPRA,EQSA
 C
       EQUIVALENCE (P1(1),A(65)),(R1(1),A(69)),(Q1(1),A(73)),
      * (S1(1),A(77))
@@ -1817,25 +1854,51 @@ C
           RS(I)=1.D0/S1(I)
  11      ENDDO
 C
+C  The (I,K)-dependent trig/exp terms below do not depend on M, but the
+C  original code recomputed them once per M=1,2 pass. Precomputing them
+C  once here (instead of twice) is a pure speed optimisation; the
+C  arithmetic and evaluation order for each term are unchanged.
+C
+          DO 5 I=1,4
+            CYPIA(I)=DCOS(Y*RP(I))
+            CYQIA(I)=DCOS(Y*RQ(I))
+            SYPIA(I)=DSIN(Y*RP(I))
+            SYQIA(I)=DSIN(Y*RQ(I))
+  5       ENDDO
+          DO 6 K=1,4
+            SZRKA(K)=DSIN(Z*RR(K))
+            CZSKA(K)=DCOS(Z*RS(K))
+            CZRKA(K)=DCOS(Z*RR(K))
+            SZSKA(K)=DSIN(Z*RS(K))
+  6       ENDDO
+          DO 7 I=1,4
+            DO 8 K=1,4
+              SQPRA(I,K)=DSQRT(RP(I)**2+RR(K)**2)
+              SQQSA(I,K)=DSQRT(RQ(I)**2+RS(K)**2)
+              EPRA(I,K)=DEXP(X*SQPRA(I,K))
+              EQSA(I,K)=DEXP(X*SQQSA(I,K))
+  8         ENDDO
+  7       ENDDO
+C
           L=0
 C
            DO 1 M=1,2     !    M=1 IS FOR THE 1ST SUM ("PERP." SYMMETRY)
 C                           AND M=2 IS FOR THE SECOND SUM ("PARALL." SYMMETRY)
              DO 2 I=1,4
-                  CYPI=DCOS(Y*RP(I))
-                  CYQI=DCOS(Y*RQ(I))
-                  SYPI=DSIN(Y*RP(I))
-                  SYQI=DSIN(Y*RQ(I))
+                  CYPI=CYPIA(I)
+                  CYQI=CYQIA(I)
+                  SYPI=SYPIA(I)
+                  SYQI=SYQIA(I)
 C
                 DO 3 K=1,4
-                   SZRK=DSIN(Z*RR(K))
-                   CZSK=DCOS(Z*RS(K))
-                   CZRK=DCOS(Z*RR(K))
-                   SZSK=DSIN(Z*RS(K))
-                     SQPR=DSQRT(RP(I)**2+RR(K)**2)
-                     SQQS=DSQRT(RQ(I)**2+RS(K)**2)
-                        EPR=DEXP(X*SQPR)
-                        EQS=DEXP(X*SQQS)
+                   SZRK=SZRKA(K)
+                   CZSK=CZSKA(K)
+                   CZRK=CZRKA(K)
+                   SZSK=SZSKA(K)
+                     SQPR=SQPRA(I,K)
+                     SQQS=SQQSA(I,K)
+                        EPR=EPRA(I,K)
+                        EQS=EQSA(I,K)
 C
                     DO 4 N=1,2  ! N=1 IS FOR THE FIRST PART OF EACH COEFFICIENT
 C                                  AND N=2 IS FOR THE SECOND ONE
@@ -1908,6 +1971,9 @@ C
 C
          DIMENSION P(2),R(2),Q(2),S(2)
          DIMENSION A(24)
+         REAL*8, DIMENSION(2) :: CYPIA,SYPIA,CYQIA,SYQIA
+         REAL*8, DIMENSION(2) :: SZRKA,CZRKA,CZSKA,SZSKA
+         REAL*8, DIMENSION(2,2) :: SQPRA,SQQSA,EPRA,EQSA
 C
          EQUIVALENCE(P(1),A(17)),(R(1),A(19)),(Q(1),A(21)),(S(1),A(23))
          DATA A/-111.6371348,124.5402702,110.3735178,-122.0095905,
@@ -1925,23 +1991,49 @@ C
            HZ=0.D0
            L=0
 C
+C  The (I,K)-dependent trig/exp terms below do not depend on M, but the
+C  original code recomputed them once per M=1,2 pass. Precomputing them
+C  once here (instead of twice) is a pure speed optimisation; the
+C  arithmetic and evaluation order for each term are unchanged.
+C
+           DO 5 I=1,2
+             CYPIA(I)=DCOS(Y/P(I))
+             CYQIA(I)=DCOS(Y/Q(I))
+             SYPIA(I)=DSIN(Y/P(I))
+             SYQIA(I)=DSIN(Y/Q(I))
+  5        ENDDO
+           DO 6 K=1,2
+             SZRKA(K)=DSIN(Z/R(K))
+             CZSKA(K)=DCOS(Z/S(K))
+             CZRKA(K)=DCOS(Z/R(K))
+             SZSKA(K)=DSIN(Z/S(K))
+  6        ENDDO
+           DO 7 I=1,2
+             DO 8 K=1,2
+               SQPRA(I,K)=DSQRT(1.D0/P(I)**2+1.D0/R(K)**2)
+               SQQSA(I,K)=DSQRT(1.D0/Q(I)**2+1.D0/S(K)**2)
+               EPRA(I,K)=DEXP(X*SQPRA(I,K))
+               EQSA(I,K)=DEXP(X*SQQSA(I,K))
+  8          ENDDO
+  7        ENDDO
+C
            DO 1 M=1,2     !    M=1 IS FOR THE 1ST SUM ("PERP." SYMMETRY)
 C                           AND M=2 IS FOR THE SECOND SUM ("PARALL." SYMMETRY)
              DO 2 I=1,2
-                  CYPI=DCOS(Y/P(I))
-                  CYQI=DCOS(Y/Q(I))
-                  SYPI=DSIN(Y/P(I))
-                  SYQI=DSIN(Y/Q(I))
+                  CYPI=CYPIA(I)
+                  CYQI=CYQIA(I)
+                  SYPI=SYPIA(I)
+                  SYQI=SYQIA(I)
 C
                DO 3 K=1,2
-                   SZRK=DSIN(Z/R(K))
-                   CZSK=DCOS(Z/S(K))
-                   CZRK=DCOS(Z/R(K))
-                   SZSK=DSIN(Z/S(K))
-                     SQPR=DSQRT(1.D0/P(I)**2+1.D0/R(K)**2)
-                     SQQS=DSQRT(1.D0/Q(I)**2+1.D0/S(K)**2)
-                        EPR=DEXP(X*SQPR)
-                        EQS=DEXP(X*SQQS)
+                   SZRK=SZRKA(K)
+                   CZSK=CZSKA(K)
+                   CZRK=CZRKA(K)
+                   SZSK=SZSKA(K)
+                     SQPR=SQPRA(I,K)
+                     SQQS=SQQSA(I,K)
+                        EPR=EPRA(I,K)
+                        EQS=EQSA(I,K)
 C
                    DO 4 N=1,2  ! N=1 IS FOR THE FIRST PART OF EACH COEFFICIENT
 C                                  AND N=2 IS FOR THE SECOND ONE

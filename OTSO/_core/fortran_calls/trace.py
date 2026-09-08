@@ -15,7 +15,7 @@ from ..data_classes.trace_data import TraceData
 def FortranTrace(Data: list, TraceDataInstance: TraceData, queue: mp.Queue, JsonFile):
     
     if TraceDataInstance.model[1] == 99:
-      mhd_utils.MHDinitialise(TraceDataInstance.MHDfile)
+      mhd_utils.MHDinitialise(TraceDataInstance.MHDfile, TraceDataInstance.MHDgridtype)
     
     for x in Data:
 

@@ -44,6 +44,7 @@ class TraceData:
     internalmag: str
     externalmag: str
     boberg: bool
+    optimise_tsy: bool
     bobergtype: str
     magnetopause: str
     corenum: int
@@ -57,6 +58,7 @@ class TraceData:
     h: Sequence[float]
     MHDfile: str
     MHDcoordsys: str
+    MHDgridtype: str
     spheresize: float
     inputcoord: str
     Verbose: bool

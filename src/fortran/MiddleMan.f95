@@ -41,6 +41,7 @@ sequence
     logical :: adapt
     logical :: totalbetacheck
     logical :: trapdistcheck
+    logical :: optimise_tsy
 
 end type FortranData
 
@@ -174,6 +175,7 @@ subroutine cutoff(Data, g8, h8, Rigidities, Allowed)
     PositionIN8      = real(Data%PositionIN, kind=8)
     End8             = real(Data%End,        kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     mintrapdist      = Data%trapdist
     totalbetacheck   = Data%totalbetacheck
     trapdistcheck    = Data%trapdistcheck
@@ -352,6 +354,7 @@ subroutine cone(Data, g8, h8, Rigidities, Allowed, Asymlat, Asymlong)
     PositionIN8      = real(Data%PositionIN, kind=8)
     End8             = real(Data%End,        kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     mintrapdist      = Data%trapdist
     totalbetacheck   = Data%totalbetacheck
     trapdistcheck    = Data%trapdistcheck
@@ -548,6 +551,7 @@ subroutine trajectory_full(Data, g8, h8, Rigidity, TrajectoryFile, &
     PositionIN8      = real(Data%PositionIN, kind=8)
     End8             = real(Data%End,        kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     mintrapdist      = Data%trapdist
     totalbetacheck   = Data%totalbetacheck
     trapdistcheck    = Data%trapdistcheck
@@ -732,6 +736,7 @@ subroutine trajectory(Data, g8, h8, Rigidities, RigiditiesLen, &
     PositionIN8      = real(Data%PositionIN, kind=8)
     End8             = real(Data%End,        kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     mintrapdist      = Data%trapdist
     totalbetacheck   = Data%totalbetacheck
     trapdistcheck    = Data%trapdistcheck
@@ -918,6 +923,7 @@ subroutine transmission(Data, g8, h8, Rigidities, Transmissions)
     PositionIN8      = real(Data%PositionIN, kind=8)
     End8             = real(Data%End,        kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     mintrapdist      = Data%trapdist
     totalbetacheck   = Data%totalbetacheck
     trapdistcheck    = Data%trapdistcheck
@@ -1104,6 +1110,7 @@ subroutine MagStrength(Pin, Data, CoordIN, CoordOUT, g8, h8, Bfield)
     Wind8            = real(Data%Wind,       kind=8)
     Date8            = real(Data%Date,       kind=8)
     model            = Data%mode
+    optimise_tsy     = Data%optimise_tsy
     year             = int(Data%Date(1))
     day              = int(Data%Date(2))
     hour             = int(Data%Date(3))
@@ -1241,6 +1248,7 @@ Date8            = real(Data%Date,       kind=8)
 PositionIN8      = real(Data%PositionIN, kind=8)
 End8             = real(Data%End,        kind=8)
 model            = Data%mode
+optimise_tsy     = Data%optimise_tsy
 mintrapdist      = Data%trapdist
 totalbetacheck   = Data%totalbetacheck
 trapdistcheck    = Data%trapdistcheck
@@ -1396,7 +1404,7 @@ end subroutine FieldTrace
 subroutine MHDstartupSorted(XU, YU, ZU, MHDposition_in, MHDB_in, nx_split, ny_split, nz_split, &
                             mix,max,miy,may,miz,maz, &
                             region_order_in, start_x, end_x, start_y, end_y, start_z, end_z, &
-                            num_regions,XUlen, YUlen, ZUlen)
+                            num_regions,XUlen, YUlen, ZUlen, uniform_grid)
 
   use Interpolation
   implicit none
@@ -1413,6 +1421,7 @@ subroutine MHDstartupSorted(XU, YU, ZU, MHDposition_in, MHDB_in, nx_split, ny_sp
   integer :: nx_split,ny_split,nz_split,i,j,dx,dy,dz,idx,temp
   !integer :: search_range
   real :: mix,max,miy,may,miz,maz
+  logical :: uniform_grid
 
   ! Save grid sizes
   n_x = XUlen
@@ -1427,13 +1436,23 @@ subroutine MHDstartupSorted(XU, YU, ZU, MHDposition_in, MHDB_in, nx_split, ny_sp
   MinZ = miz
   MaxZ = maz
 
-  ! Allocate and copy fields
+  ! Allocate and copy fields. Deallocate first if this isn't the first MHD
+  ! grid loaded in this process (e.g. a session that switches MHDfile between
+  ! calls) - allocating an already-allocated variable is a runtime error.
+  if (allocated(MHDposition)) deallocate(MHDposition)
+  if (allocated(MHDB)) deallocate(MHDB)
   allocate(MHDposition(n_x, n_y, n_z, 3))
   allocate(MHDB(n_x, n_y, n_z, 3))
   MHDposition = MHDposition_in
   MHDB = MHDB_in
 
   ! Store region bounds
+  if (allocated(start_idx_x_region)) deallocate(start_idx_x_region)
+  if (allocated(end_idx_x_region))   deallocate(end_idx_x_region)
+  if (allocated(start_idx_y_region)) deallocate(start_idx_y_region)
+  if (allocated(end_idx_y_region))   deallocate(end_idx_y_region)
+  if (allocated(start_idx_z_region)) deallocate(start_idx_z_region)
+  if (allocated(end_idx_z_region))   deallocate(end_idx_z_region)
   allocate(start_idx_x_region(regions)); start_idx_x_region = start_x
   allocate(end_idx_x_region(regions));   end_idx_x_region   = end_x
   allocate(start_idx_y_region(regions)); start_idx_y_region = start_y
@@ -1442,6 +1461,7 @@ subroutine MHDstartupSorted(XU, YU, ZU, MHDposition_in, MHDB_in, nx_split, ny_sp
   allocate(end_idx_z_region(regions));   end_idx_z_region   = end_z
 
   ! Store region processing order
+  if (allocated(region_order)) deallocate(region_order)
   allocate(region_order(regions)); region_order = region_order_in
 
   ! You could optionally compute resolution here too:
@@ -1452,6 +1472,18 @@ subroutine MHDstartupSorted(XU, YU, ZU, MHDposition_in, MHDB_in, nx_split, ny_sp
   n_x_split = nx_split
   n_y_split = ny_split
   n_z_split = nz_split
+
+  ! Store the axis coordinate arrays for the non-uniform ("stretched") grid
+  ! lookup path (binary search); harmless to keep even for uniform grids,
+  ! where they simply go unused.
+  if (allocated(XU_axis)) deallocate(XU_axis)
+  if (allocated(YU_axis)) deallocate(YU_axis)
+  if (allocated(ZU_axis)) deallocate(ZU_axis)
+  allocate(XU_axis(XUlen)); XU_axis = XU
+  allocate(YU_axis(YUlen)); YU_axis = YU
+  allocate(ZU_axis(ZUlen)); ZU_axis = ZU
+
+  is_uniform_grid = uniform_grid
 
 end subroutine MHDstartupSorted
 

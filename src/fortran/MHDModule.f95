@@ -30,6 +30,12 @@ module Interpolation
     !Min/Max(XYZ) = min and max position values for the MHD grid
     real :: MinX, MaxX, MinY, MaxY, MinZ, MaxZ
 
+    !is_uniform_grid = .true. for a fixed-spacing grid (fast index-arithmetic
+    !lookup); .false. for a grid with varying spacing per axis (binary-search
+    !lookup against the stored axis coordinate arrays below)
+    logical :: is_uniform_grid = .true.
+    real(8), allocatable :: XU_axis(:), YU_axis(:), ZU_axis(:)
+
     !THREAD SPECIFIC VARIABLES
     logical :: first_region
     logical :: first_region_check = .true.
@@ -75,6 +81,47 @@ subroutine count_lines(filename, n_lines)
 end subroutine count_lines
 
 
+function bracket_index(arr, n, val) result(idx)
+    ! Returns idx (1 <= idx <= n-1) such that arr(idx) <= val <= arr(idx+1),
+    ! for a sorted ascending array arr(1:n). Values outside the array's range
+    ! are clamped to the nearest edge bracket. Used for the non-uniform
+    ! ("stretched") grid lookup path, where spacing isn't constant so the
+    ! O(1) index-arithmetic formula used for uniform grids doesn't apply -
+    ! this is an O(log n) bisection instead.
+    implicit none
+    integer, intent(in) :: n
+    real(8), intent(in) :: arr(n)
+    real(8), intent(in) :: val
+    integer :: idx
+    integer :: lo, hi, mid
+
+    if (n <= 1) then
+        idx = 1
+        return
+    end if
+
+    if (val <= arr(1)) then
+        idx = 1
+        return
+    end if
+    if (val >= arr(n)) then
+        idx = n - 1
+        return
+    end if
+
+    lo = 1
+    hi = n
+    do while (hi - lo > 1)
+        mid = (lo + hi) / 2
+        if (arr(mid) <= val) then
+            lo = mid
+        else
+            hi = mid
+        end if
+    end do
+    idx = lo
+end function bracket_index
+
 subroutine Interpolate(x_target, y_target, z_target, n_x, n_y, n_z, Bx_out, By_out, Bz_out)
     implicit none
     real(8), intent(in) :: x_target, y_target, z_target  ! Target coordinates in Earth radii
@@ -91,211 +138,63 @@ subroutine Interpolate(x_target, y_target, z_target, n_x, n_y, n_z, Bx_out, By_o
     logical :: found_region, found
     integer :: region_x,region_y,region_z
     integer :: neighbor_x, neighbor_y, neighbor_z
+    integer :: chunk_x, chunk_y, chunk_z
 
     min_dist = 1.0E30
 
    !print*, x_res
 
-    x_round = floor(x_target / x_res) * x_res
-    y_round = floor(y_target / y_res) * y_res
-    z_round = floor(z_target / z_res) * z_res
-
-   !print*, "Target Position:", x_target, y_target, z_target
-   !print*, "Target Position:", x_round, y_round, z_round
-
     if (x_target > MaxX .or. y_target > MaxY .or. z_target > MaxZ) GOTO 100
     if (x_target < MinX .or. y_target < MinY .or. z_target < MinZ) GOTO 100
 
+    if (is_uniform_grid) then
 
-    found_region = .false.
-    
-if (first_region_check .and. first_region) then
-    region = first_region_val
-   !print*, "searching first region: ", first_region_val
-   !print*, "Target Position:", x_round, y_round, z_round
-   !print*, "MinX:   ", MHDposition(start_idx_x_region(first_region_val), start_idx_y_region(first_region_val), &
-   !start_idx_z_region(first_region_val), 1)
-   !print*, "MaxX:   ", MHDposition(end_idx_x_region(first_region_val), end_idx_y_region(first_region_val), &
-   !end_idx_z_region(first_region_val), 1)
-   !print*, "MinY:   ", MHDposition(start_idx_x_region(first_region_val), start_idx_y_region(first_region_val), &
-   !start_idx_z_region(first_region_val), 2)
-   !print*, "MaxY:   ", MHDposition(end_idx_x_region(first_region_val), end_idx_y_region(first_region_val), &
-   !end_idx_z_region(first_region_val), 2)
-   !print*, "MinZ:   ", MHDposition(start_idx_x_region(first_region_val), start_idx_y_region(first_region_val), &
-   !start_idx_z_region(first_region_val), 3)
-   !print*, "MaxZ:   ", MHDposition(end_idx_x_region(first_region_val), end_idx_y_region(first_region_val), &
-   !end_idx_z_region(first_region_val), 3)
-    if (x_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 1) .and. &
-        x_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 1) .and. &
-        y_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 2) .and. &
-        y_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 2) .and. &
-        z_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 3) .and. &
-        z_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 3)) then
-        
-        found_region = .true.
-        last_region = region
-        has_last_region = .true.
-        first_region_check = .false.
+        ! The grid is a uniform rectilinear grid, and the region chunking is
+        ! also a fixed, regular partition of it (see mhd_utils.py's chunking
+        ! logic: each axis is split into n_*_split chunks of size n_*/n_*_split,
+        ! with the remainder absorbed into the last chunk). So both the nearest
+        ! grid point and the region it falls in can be computed directly by
+        ! index arithmetic, with no per-call region search and no need for the
+        ! region-cache bookkeeping (first_region/has_last_region/etc) that used
+        ! to be required to make that search cheap.
+        x_round = floor(x_target / x_res) * x_res
+        y_round = floor(y_target / y_res) * y_res
+        z_round = floor(z_target / z_res) * z_res
+
+        i0 = nint((x_round - MHDposition(1,1,1,1)) / x_res) + 1
+        j0 = nint((y_round - MHDposition(1,1,1,2)) / y_res) + 1
+        k0 = nint((z_round - MHDposition(1,1,1,3)) / z_res) + 1
+
+        i0 = min(max(i0, 1), n_x)
+        j0 = min(max(j0, 1), n_y)
+        k0 = min(max(k0, 1), n_z)
+
+        chunk_x = n_x / n_x_split
+        chunk_y = n_y / n_y_split
+        chunk_z = n_z / n_z_split
+
+        region_x = min((i0 - 1) / chunk_x, n_x_split - 1)
+        region_y = min((j0 - 1) / chunk_y, n_y_split - 1)
+        region_z = min((k0 - 1) / chunk_z, n_z_split - 1)
+
+        region = region_z * (n_x_split * n_y_split) + region_y * n_x_split + region_x + 1
+
+    else
+
+        ! Non-uniform ("stretched") grid: spacing isn't constant, so the
+        ! nearest grid point can't be found by a fixed-step formula. Instead,
+        ! binary-search each axis's stored coordinate array directly for the
+        ! bracketing index - O(log n) instead of the O(1) uniform-grid
+        ! formula, but still far cheaper than the brute-force search this
+        ! replaced originally. No region concept is needed here: the
+        ! bisection already operates on the full axis in one step.
+        i0 = bracket_index(XU_axis, n_x, x_target)
+        j0 = bracket_index(YU_axis, n_y, y_target)
+        k0 = bracket_index(ZU_axis, n_z, z_target)
+
     end if
-end if
 
-
-    if (has_last_region) then
-   !print*, "searching last region: ", last_region
-
-    region_x = mod(last_region - 1, n_x_split) + 1
-    region_y = mod((last_region - 1) / n_x_split, n_y_split) + 1
-    region_z = (last_region - 1) / (n_x_split * n_y_split) + 1
-
-    found = .false.
-        do dx = -1, 1
-        do dy = -1, 1
-            do dz = -1, 1
-                neighbor_x = region_x + dx
-                neighbor_y = region_y + dy
-                neighbor_z = region_z + dz
-
-                if (neighbor_x < 1 .or. neighbor_x > n_x_split) cycle
-                if (neighbor_y < 1 .or. neighbor_y > n_y_split) cycle
-                if (neighbor_z < 1 .or. neighbor_z > n_z_split) cycle
-
-                region = (neighbor_z - 1) * (n_x_split * n_y_split) + (neighbor_y - 1) * n_x_split + neighbor_x
-
-               !print*, "Target Position:", x_round, y_round, z_round
-               !print*, "MinX:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-               !start_idx_z_region(region), 1)
-               !print*, "MaxX:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-               !end_idx_z_region(region), 1)
-               !print*, "MinY:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-               !start_idx_z_region(region), 2)
-               !print*, "MaxY:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-               !end_idx_z_region(region), 2)
-               !print*, "MinZ:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-               !start_idx_z_region(region), 3)
-               !print*, "MaxZ:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-               !end_idx_z_region(region), 3)
-                
-                
-                
-                if (x_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-                start_idx_z_region(region), 1) .and. &
-                    x_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-                    end_idx_z_region(region), 1) .and. &
-                    y_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-                    start_idx_z_region(region), 2) .and. &
-                    y_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-                    end_idx_z_region(region), 2) .and. &
-                    z_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-                    start_idx_z_region(region), 3) .and. &
-                    z_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-                    end_idx_z_region(region), 3)) then
-
-                    last_region = region
-                    has_last_region = .true.
-                    found = .true.
-                    found_region = .true.
-                    exit
-                end if
-            end do
-            if (found) then
-            !print *, "In neigboring region"
-            !print *, region
-            found_region = .true.
-            exit
-            end if
-        end do
-        if (found) then
-        !print *, "In neigboring region"
-        !print *, region
-        found_region = .true.
-        exit
-        end if
-    end do
-    if (.not. found) then
-    has_last_region = .false.
-    found_region = .false.
-    !print *, "Not in neigboring regions"
-    end if
-end if
-
-
-if (.not. found_region) then
-    !print *, "Searching All regions"
-    do i = 1, regions
-        region = region_order(i)
-        !print *, region
-        !print *, "Target Position:", x_round, y_round, z_round
-        !print *, "MinX:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 1)
-        !print *, "MaxX:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 1)
-        !print *, "MinY:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 2)
-        !print *, "MaxY:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 2)
-        !print *, "MinZ:   ", MHDposition(start_idx_x_region(region), start_idx_y_region(region), start_idx_z_region(region), 3)
-        !print *, "MaxZ:   ", MHDposition(end_idx_x_region(region), end_idx_y_region(region), end_idx_z_region(region), 3)
-        if (x_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-        start_idx_z_region(region), 1) .and. &
-            x_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-            end_idx_z_region(region), 1) .and. &
-            y_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region),&
-            start_idx_z_region(region), 2) .and. &
-            y_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region),&
-            end_idx_z_region(region), 2) .and. &
-            z_round >= MHDposition(start_idx_x_region(region), start_idx_y_region(region), &
-            start_idx_z_region(region), 3) .and. &
-            z_round <= MHDposition(end_idx_x_region(region), end_idx_y_region(region), &
-            end_idx_z_region(region), 3)) then
-            found_region = .true.
-            last_region = region
-            has_last_region = .true.
-            exit
-        end if
-    end do
-end if
-
-
-if (.not. found_region) then
-        !print *, "Error: Target position is out of bounds!"
-        !print *, x_target, y_target, z_target
-        !print *, x_round, y_round, z_round
-    has_last_region = .false.
-    GOTO 100
-end if
-
-if (.not. first_region) then
-   first_region_val = region
-   first_region = .true.
-   first_region_check = .true.
-   !print *, "assigning first region: ", first_region_val
-end if
-
-
-    !print *, "Target Position is in Region ", region
-
-    i0 = start_idx_x_region(region)
-    j0 = start_idx_y_region(region)
-    k0 = start_idx_z_region(region)
-
-    i1 = min(i0 + 1, end_idx_x_region(region))
-    j1 = min(j0 + 1, end_idx_y_region(region))
-    k1 = min(k0 + 1, end_idx_z_region(region))
-    
-    do i = start_idx_x_region(region), end_idx_x_region(region)
-        do j = start_idx_y_region(region), end_idx_y_region(region)
-            do k = start_idx_z_region(region), end_idx_z_region(region)
-                diff_x = MHDposition(i,j,k,1) - x_round
-                diff_y = MHDposition(i,j,k,2) - y_round
-                diff_z = MHDposition(i,j,k,3) - z_round
-    
-                dist = sqrt(diff_x**2 + diff_y**2 + diff_z**2)
-    
-                if (dist < min_dist) then
-                    min_dist = dist
-                    i0 = i
-                    j0 = j
-                    k0 = k
-                end if
-            end do
-        end do
-    end do
+    found_region = .true.
 
     i1 = min(i0 + 1, n_x)
     j1 = min(j0 + 1, n_y)

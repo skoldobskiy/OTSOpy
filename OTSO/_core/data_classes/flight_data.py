@@ -47,6 +47,7 @@ class FlightData:
     internalmag: str
     externalmag: str
     boberg: bool
+    optimise_tsy: bool
     bobergtype: str
     intmodel: str
     startrigidity: float
@@ -67,6 +68,7 @@ class FlightData:
     unit: str
     MHDfile: str
     MHDcoordsys: str
+    MHDgridtype: str
     spheresize: float
     inputcoord: str
     Verbose: bool

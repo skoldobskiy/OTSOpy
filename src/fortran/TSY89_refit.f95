@@ -308,15 +308,22 @@
        YNP=RPI/YN*0.5D0
        YND=2.D0*YN
 
-       AK5= A(5)
-       
+       ENDIF
+
+! Boberg ring-current (AK5) override: intentionally OUTSIDE the IOP.NE.IOPT
+! cache guard above, since it depends on DST (which can vary every call)
+! rather than on IOPT (the discrete Kp bin, which only updates every 3
+! hours). Nesting it inside that guard previously froze the "continuous"
+! and Dst-dependent variants for the entire 3-hour Kp window.
+       AK5 = A(5)
+
        IF (model(3) == 1) THEN
        IF (model(4) == 1) THEN
        IF (Kp > 7) THEN
        AK5 = -2923.09D0*(abs(DST)+2.01D0)**0.78
        END IF
        END IF
-       
+
        IF (model(4) == 2) THEN
        AK5 = -2923.09D0*(abs(DST)+2.01D0)**0.78
        END IF
@@ -343,8 +350,6 @@
        END IF
 
        END IF
-
-       ENDIF
 
 
        SPS = DSIN(PS)

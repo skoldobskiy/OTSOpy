@@ -337,7 +337,11 @@ c
       YY=Y*XAPPA
       ZZ=Z*XAPPA
 C
+C   SPS,CPS ARE COMPUTED ONCE HERE AND FORWARDED TO ALL THE SUBROUTINES
+C   BELOW THAT NEED DSIN(PS)/DCOS(PS), INSTEAD OF LETTING EACH OF THEM
+C   RECOMPUTE THE SAME TRIG FUNCTIONS OF THE SAME ANGLE PS INDEPENDENTLY.
       SPS=DSIN(PS)
+      CPS=DCOS(PS)
 c
       X0=A0_X0/XAPPA
       AM=A0_A/XAPPA
@@ -393,7 +397,7 @@ c      IF (XMXM.LT.0.) XMXM=0. ! THE BOUNDARY IS A CYLINDER TAILWARD OF X=X0-AM
 c      AXX0=XMXM**2
 c      ARO=ASQ+RHO2
 c      SIGMA=DSQRT((ARO+AXX0+SQRT((ARO+AXX0)**2-4.*ASQ*AXX0))/(2.*ASQ))
-      call RMCO_magnetopause_2001(pdyn,ps,x,y,z,SIGMA)
+      call RMCO_magnetopause_2001(pdyn,ps,sps,x,y,z,SIGMA)
 C
 C   NOW, THERE ARE THREE POSSIBLE CASES:
 C    (1) INSIDE THE MAGNETOSPHERE   (SIGMA
@@ -407,7 +411,7 @@ C                              (WITH THE POTENTIAL "PENETRATED" INTERCONNECTION 
 C+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 C
       IF (IOPGEN.LE.1) THEN
-         CALL RMCO_SHLCAR3X3(XX,YY,ZZ,PS,CFX,CFY,CFZ)         !  DIPOLE SHIELDING FIELD
+         CALL RMCO_SHLCAR3X3(XX,YY,ZZ,PS,CPS,SPS,CFX,CFY,CFZ) !  DIPOLE SHIELDING FIELD
          BXCF=CFX*XAPPA3
          BYCF=CFY*XAPPA3
          BZCF=CFZ*XAPPA3
@@ -422,7 +426,7 @@ C
          DXSHIFT2=0.D0
          D=A(28)
          DELTADY=A(29)
-         CALL RMCO_DEFORMED (IOPT,PS,XX,YY,ZZ,                !  TAIL FIELD (THREE MODES)
+         CALL RMCO_DEFORMED (IOPT,PS,SPS,XX,YY,ZZ,             !  TAIL FIELD (THREE MODES)
      *    BXT1,BYT1,BZT1,BXT2,BYT2,BZT2)
       ELSE
          BXT1=0.D0
@@ -436,7 +440,8 @@ C
       IF (IOPGEN.EQ.0.OR.IOPGEN.EQ.3) THEN
          XKAPPA1=A(35)+A(36)*VBIMF2
          XKAPPA2=A(37)+A(38)*VBIMF2
-         CALL RMCO_BIRK_TOT (IOPB,PS,XX,YY,ZZ,BXR11,BYR11,BZR11,
+         CALL RMCO_BIRK_TOT (IOPB,PS,CPS,SPS,XX,YY,ZZ,BXR11,BYR11,
+     *   BZR11,
      *   BXR12,BYR12,BZR12,BXR21,BYR21,BZR21,BXR22,BYR22,BZR22)    !   BIRKELAND FIELD (TWO MODES FOR R1 AND TWO MODES FOR R2)
       ELSE
          BXR11=0.D0
@@ -459,7 +464,7 @@ C
          IF (ZNAM.LT.20.D0) ZNAM=20.D0
          SC_SY=A(30)*(20.D0/ZNAM)**A(31) *XAPPA    !
          SC_AS=A(32)*(20.D0/ZNAM)**A(33) *XAPPA
-         CALL RMCO_FULL_RC(IOPR,PS,XX,YY,ZZ,BXSRC,BYSRC,
+         CALL RMCO_FULL_RC(IOPR,PS,CPS,SPS,XX,YY,ZZ,BXSRC,BYSRC,
      *       BZSRC,BXPRC,BYPRC,BZPRC)  !  SHIELDED RING CURRENT (SRC AND PRC)
       ELSE
          BXSRC=0.D0
@@ -529,7 +534,7 @@ C                                             THE INTERPOLATION REGION
        FINT=0.5*(1.-(SIGMA-S0)/DSIG)
        FEXT=0.5*(1.+(SIGMA-S0)/DSIG)
 C
-       CALL RMCO_DIPOLE (PS,X,Y,Z,QX,QY,QZ)
+       CALL RMCO_DIPOLE (PS,CPS,SPS,X,Y,Z,QX,QY,QZ)
        BX=(BBX+QX)*FINT+OIMFX*FEXT -QX
        BY=(BBY+QY)*FINT+OIMFY*FEXT -QY
        BZ=(BBZ+QZ)*FINT+OIMFZ*FEXT -QZ
@@ -539,7 +544,7 @@ C                      POSSIBILITY IS NOW THE CASE (3):
 C--------------------------------------------------------------------------
         ELSE
                 SubResult = 1
-                CALL RMCO_DIPOLE (PS,X,Y,Z,QX,QY,QZ)
+                CALL RMCO_DIPOLE (PS,CPS,SPS,X,Y,Z,QX,QY,QZ)
                 BX=OIMFX-QX
                 BY=OIMFY-QY
                 BZ=OIMFZ-QZ
@@ -549,7 +554,7 @@ C
 c
 C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 C
-         SUBROUTINE RMCO_SHLCAR3X3(X,Y,Z,PS,BX,BY,BZ)
+         SUBROUTINE RMCO_SHLCAR3X3(X,Y,Z,PS,CPS,SPS,BX,BY,BZ)
 C
 C   THIS S/R RETURNS THE SHIELDING FIELD FOR THE EARTH'S DIPOLE,
 C   REPRESENTED BY  2x3x3=18 "CARTESIAN" HARMONICS, tilted with respect
@@ -595,8 +600,6 @@ C
        T1 =A(49)
        T2 =A(50)
 C
-       CPS=DCOS(PS)
-       SPS=DSIN(PS)
        S2PS=2.D0*CPS      !   MODIFIED HERE (SIN(2*PS) INSTEAD OF SIN(3*PS))
 C
        ST1=DSIN(PS*T1)
@@ -878,7 +881,8 @@ c
 c############################################################################
 c
 C
-      SUBROUTINE RMCO_DEFORMED (IOPT,PS,X,Y,Z,BX1,BY1,BZ1,BX2,BY2,BZ2)
+      SUBROUTINE RMCO_DEFORMED (IOPT,PS,SPS,X,Y,Z,BX1,BY1,BZ1,BX2,BY2,
+     * BZ2)
 C
 C   IOPT - TAIL FIELD MODE FLAG:   IOPT=0 - THE TWO TAIL MODES ARE ADDED UP
 C                                  IOPT=1 - MODE 1 ONLY
@@ -888,6 +892,8 @@ C   CALCULATES GSM COMPONENTS OF TWO UNIT-AMPLITUDE TAIL FIELD MODES,
 C    TAKING INTO ACCOUNT BOTH EFFECTS OF DIPOLE TILT:
 C    WARPING IN Y-Z (DONE BY THE S/R WARPED) AND BENDING IN X-Z (DONE BY THIS SUBROUTINE)
 C
+C   SPS - PRECOMPUTED DSIN(PS), PASSED IN BY THE CALLER (RMCO_EXTALL).
+C
       USE TSY01_RH0
       IMPLICIT REAL*8 (A-H,O-Z)
       !COMMON /RH0/ RH0
@@ -895,7 +901,6 @@ C
 C
 C  RH0,RH1,RH2, AND IEPS CONTROL THE TILT-RELATED DEFORMATION OF THE TAIL FIELD
 C
-      SPS=DSIN(PS)
       CPS=DSQRT(1.D0-SPS**2)
       R2=X**2+Y**2+Z**2
       R=SQRT(R2)
@@ -932,7 +937,7 @@ C
 C
 C     DEFORM:
 C
-      CALL RMCO_WARPED(IOPT,PS,XAS,Y,ZAS,BXAS1,BYAS1,BZAS1,
+      CALL RMCO_WARPED(IOPT,PS,SPS,XAS,Y,ZAS,BXAS1,BYAS1,BZAS1,
      * BXAS2,BYAS2,BZAS2)
 C
       BX1=BXAS1*DZASDZ-BZAS1*DXASDZ +BYAS1*FAC1
@@ -948,7 +953,8 @@ C
 C
 C------------------------------------------------------------------
 C
-      SUBROUTINE RMCO_WARPED (IOPT,PS,X,Y,Z,BX1,BY1,BZ1,BX2,BY2,BZ2)
+      SUBROUTINE RMCO_WARPED (IOPT,PS,SPS,X,Y,Z,BX1,BY1,BZ1,BX2,BY2,
+     * BZ2)
 C
 C   CALCULATES GSM COMPONENTS OF THE WARPED FIELD FOR TWO TAIL UNIT MODES.
 C   THE WARPING DEFORMATION IS IMPOSED ON THE UNWARPED FIELD, COMPUTED
@@ -959,6 +965,9 @@ C   IOPT - TAIL FIELD MODE FLAG:   IOPT=0 - THE TWO TAIL MODES ARE ADDED UP
 C                                  IOPT=1 - MODE 1 ONLY
 C                                  IOPT=2 - MODE 2 ONLY
 C
+C   SPS - PRECOMPUTED DSIN(PS), PASSED IN BY THE CALLER (RMCO_DEFORMED)
+C   TO AVOID RECOMPUTING THE SAME TRIG CALL ON EVERY INVOCATION.
+C
       USE TSY01_G
       IMPLICIT REAL*8 (A-H,O-Z)
 C
@@ -967,7 +976,6 @@ C
       XL=20.D0
       DXLDX=0.D0
 
-      SPS=DSIN(PS)
       RHO2=Y**2+Z**2
       RHO=DSQRT(RHO2)
 
@@ -985,7 +993,7 @@ C
 
       F=PHI+GA*RHO2*RR4L4*CPHI*SPS
       DFDPHI=1.D0-GA*RHO2*RR4L4*SPHI*SPS
-      DFDRHO=G*RR4L4**2*(3.D0*XL**4-RHO2**2)*CPHI*SPS
+      DFDRHO=GA*RR4L4**2*(3.D0*XL**4-RHO2**2)*CPHI*SPS
       DFDX=RR4L4*CPHI*SPS*(DGDX*RHO2-GA*RHO*RR4L4*4.D0*XL**3*DXLDX)
 
       CF=DCOS(F)
@@ -1265,7 +1273,7 @@ C
 c
 c %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 C
-      SUBROUTINE RMCO_BIRK_TOT (IOPB,PS,X,Y,Z,BX11,BY11,BZ11,
+      SUBROUTINE RMCO_BIRK_TOT (IOPB,PS,CPS,SPS,X,Y,Z,BX11,BY11,BZ11,
      *            BX12,BY12,BZ12,BX21,BY21,BZ21,BX22,BY22,BZ22)
 C
 C      IOPB -  BIRKELAND FIELD MODE FLAG:
@@ -1362,13 +1370,15 @@ C
       IF (IOPB.EQ.0.OR.IOPB.EQ.1) THEN
 
       CALL RMCO_BIRK_1N2 (1,1,PS,X,Y,Z,FX11,FY11,FZ11)           !  REGION 1, MODE 1
-      CALL RMCO_BIRK_SHL (SH11,PS,X_SC,X,Y,Z,HX11,HY11,HZ11)
+      CALL RMCO_BIRK_SHL (SH11,PS,CPS,SPS,X_SC,X,Y,Z,HX11,HY11,
+     * HZ11)
       BX11=FX11+HX11
       BY11=FY11+HY11
       BZ11=FZ11+HZ11
 
       CALL RMCO_BIRK_1N2 (1,2,PS,X,Y,Z,FX12,FY12,FZ12)           !  REGION 1, MODE 2
-      CALL RMCO_BIRK_SHL (SH12,PS,X_SC,X,Y,Z,HX12,HY12,HZ12)
+      CALL RMCO_BIRK_SHL (SH12,PS,CPS,SPS,X_SC,X,Y,Z,HX12,HY12,
+     * HZ12)
       BX12=FX12+HX12
       BY12=FY12+HY12
       BZ12=FZ12+HZ12
@@ -1381,13 +1391,15 @@ C
       IF (IOPB.EQ.0.OR.IOPB.EQ.2) THEN
 
       CALL RMCO_BIRK_1N2 (2,1,PS,X,Y,Z,FX21,FY21,FZ21)           !  REGION 2, MODE 1
-      CALL RMCO_BIRK_SHL (SH21,PS,X_SC,X,Y,Z,HX21,HY21,HZ21)
+      CALL RMCO_BIRK_SHL (SH21,PS,CPS,SPS,X_SC,X,Y,Z,HX21,HY21,
+     * HZ21)
       BX21=FX21+HX21
       BY21=FY21+HY21
       BZ21=FZ21+HZ21
 
       CALL RMCO_BIRK_1N2 (2,2,PS,X,Y,Z,FX22,FY22,FZ22)           !  REGION 2, MODE 2
-      CALL RMCO_BIRK_SHL (SH22,PS,X_SC,X,Y,Z,HX22,HY22,HZ22)
+      CALL RMCO_BIRK_SHL (SH22,PS,CPS,SPS,X_SC,X,Y,Z,HX22,HY22,
+     * HZ22)
       BX22=FX22+HX22
       BY22=FY22+HY22
       BZ22=FZ22+HZ22
@@ -1580,8 +1592,31 @@ c
 C
 C   MAKE THE DEFORMATION OF COORDINATES:
 C
-       RS=R_S(A,R,THETA)
-       THETAS=THETA_S(A,R,THETA)
+C   R_S AND THETA_S (SEE BELOW) EACH SPLIT INTO AN R-DEPENDENT COEFFICIENT
+C   PART AND A THETA-DEPENDENT TRIG PART. THE 2-POINT NUMERICAL DERIVATIVES
+C   BELOW NEED R_S/THETA_S AT (R,THETA), (R+-DR,THETA) AND (R,THETA+-DT):
+C   ACROSS THOSE 5 EVALUATIONS ONLY 3 DISTINCT R-VALUES AND 3 DISTINCT
+C   THETA-VALUES ACTUALLY OCCUR, SO THE COEFFICIENT/TRIG PIECES ARE EACH
+C   COMPUTED ONCE AND REUSED, INSTEAD OF BEING RECOMPUTED FROM SCRATCH ON
+C   EVERY ONE OF THE 5 OPAQUE R_S/THETA_S CALLS AS BEFORE. THIS IS AN EXACT
+C   ALGEBRAIC REGROUPING (SAME OPERATIONS, SAME ORDER), NOT AN APPROXIMATION,
+C   SO THE RESULT IS BIT-FOR-BIT IDENTICAL TO THE ORIGINAL FORM.
+C
+       RC0=RMCO_RCOEF0(A,R)
+       RC1=RMCO_RCOEF1(A,R)
+       RC2=RMCO_RCOEF2(A,R)
+       TC1=RMCO_TCOEF1(A,R)
+       TC2=RMCO_TCOEF2(A,R)
+       TC3=RMCO_TCOEF3(A,R)
+
+       CT =DCOS(THETA)
+       CT2=DCOS(2.D0*THETA)
+       ST =DSIN(THETA)
+       ST2=DSIN(2.D0*THETA)
+       ST3=DSIN(3.D0*THETA)
+
+       RS=RC0+RC1*CT+RC2*CT2
+       THETAS=THETA+TC1*ST+TC2*ST2+TC3*ST3
        PHIS=PHI
 C
 C   CALCULATE FIELD COMPONENTS AT THE NEW POSITION (ASTERISKED):
@@ -1592,10 +1627,41 @@ C   NOW TRANSFORM B{R,T,F}_AST BY THE DEFORMATION TENSOR:
 C
 C      FIRST OF ALL, FIND THE DERIVATIVES:
 C
-       DRSDR=(R_S(A,R+DR,THETA)-R_S(A,R-DR,THETA))/(2.D0*DR)
-       DRSDT=(R_S(A,R,THETA+DT)-R_S(A,R,THETA-DT))/(2.D0*DT)
-       DTSDR=(THETA_S(A,R+DR,THETA)-THETA_S(A,R-DR,THETA))/(2.D0*DR)
-       DTSDT=(THETA_S(A,R,THETA+DT)-THETA_S(A,R,THETA-DT))/(2.D0*DT)
+       RC0P=RMCO_RCOEF0(A,R+DR)
+       RC1P=RMCO_RCOEF1(A,R+DR)
+       RC2P=RMCO_RCOEF2(A,R+DR)
+       TC1P=RMCO_TCOEF1(A,R+DR)
+       TC2P=RMCO_TCOEF2(A,R+DR)
+       TC3P=RMCO_TCOEF3(A,R+DR)
+
+       RC0M=RMCO_RCOEF0(A,R-DR)
+       RC1M=RMCO_RCOEF1(A,R-DR)
+       RC2M=RMCO_RCOEF2(A,R-DR)
+       TC1M=RMCO_TCOEF1(A,R-DR)
+       TC2M=RMCO_TCOEF2(A,R-DR)
+       TC3M=RMCO_TCOEF3(A,R-DR)
+
+       DRSDR=((RC0P+RC1P*CT+RC2P*CT2)-(RC0M+RC1M*CT+RC2M*CT2))
+     *  /(2.D0*DR)
+       DTSDR=((THETA+TC1P*ST+TC2P*ST2+TC3P*ST3)
+     *  -(THETA+TC1M*ST+TC2M*ST2+TC3M*ST3))/(2.D0*DR)
+
+       CTP=DCOS(THETA+DT)
+       CT2P=DCOS(2.D0*(THETA+DT))
+       STP=DSIN(THETA+DT)
+       ST2P=DSIN(2.D0*(THETA+DT))
+       ST3P=DSIN(3.D0*(THETA+DT))
+
+       CTM=DCOS(THETA-DT)
+       CT2M=DCOS(2.D0*(THETA-DT))
+       STM=DSIN(THETA-DT)
+       ST2M=DSIN(2.D0*(THETA-DT))
+       ST3M=DSIN(3.D0*(THETA-DT))
+
+       DRSDT=((RC0+RC1*CTP+RC2*CT2P)-(RC0+RC1*CTM+RC2*CT2M))
+     *  /(2.D0*DT)
+       DTSDT=(((THETA+DT)+TC1*STP+TC2*ST2P+TC3*ST3P)
+     *  -((THETA-DT)+TC1*STM+TC2*ST2M+TC3*ST3M))/(2.D0*DT)
 
        STSST=DSIN(THETAS)/DSIN(THETA)
        RSR=RS/R
@@ -1644,6 +1710,59 @@ c
      *                +A(23)*R/(R**2+A(29)**2))*DSIN(2.D0*THETA)
      * +(A(24)+A(25)/R+A(26)*R/(R**2+A(30)**2))*DSIN(3.D0*THETA)
 C
+      RETURN
+      END
+C
+C-----------------------------------------------------------------------------
+C
+C   THE SIX FUNCTIONS BELOW ARE THE R-DEPENDENT (THETA-INDEPENDENT) PIECES
+C   OF R_S AND THETA_S ABOVE, FACTORED OUT SO THAT RMCO_ONE_CONE CAN
+C   EVALUATE THEM ONCE PER DISTINCT R AND REUSE THEM ACROSS THE SEVERAL
+C   R_S/THETA_S EVALUATIONS ITS NUMERICAL DERIVATIVES NEED, RATHER THAN
+C   RECOMPUTING THE SAME SQRT/DIVISION-HEAVY TERMS REPEATEDLY.
+C
+      DOUBLE PRECISION FUNCTION RMCO_RCOEF0(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_RCOEF0=R+A(2)/R+A(3)*R/DSQRT(R**2+A(11)**2)
+     * +A(4)*R/(R**2+A(12)**2)
+      RETURN
+      END
+C
+      DOUBLE PRECISION FUNCTION RMCO_RCOEF1(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_RCOEF1=A(5)+A(6)/R+A(7)*R/DSQRT(R**2+A(13)**2)
+     * +A(8)*R/(R**2+A(14)**2)
+      RETURN
+      END
+C
+      DOUBLE PRECISION FUNCTION RMCO_RCOEF2(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_RCOEF2=A(9)*R/DSQRT(R**2+A(15)**2)+A(10)*R/(R**2+A(16)**2)**2
+      RETURN
+      END
+C
+      DOUBLE PRECISION FUNCTION RMCO_TCOEF1(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_TCOEF1=A(17)+A(18)/R+A(19)/R**2+A(20)*R/DSQRT(R**2+A(27)**2)
+      RETURN
+      END
+C
+      DOUBLE PRECISION FUNCTION RMCO_TCOEF2(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_TCOEF2=A(21)+A(22)*R/DSQRT(R**2+A(28)**2)
+     * +A(23)*R/(R**2+A(29)**2)
+      RETURN
+      END
+C
+      DOUBLE PRECISION FUNCTION RMCO_TCOEF3(A,R)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(31)
+      RMCO_TCOEF3=A(24)+A(25)/R+A(26)*R/(R**2+A(30)**2)
       RETURN
       END
 C
@@ -1729,14 +1848,14 @@ C
 C-------------------------------------------------------------------------
 C
 C
-         SUBROUTINE RMCO_BIRK_SHL (A,PS,X_SC,X,Y,Z,BX,BY,BZ)
+         SUBROUTINE RMCO_BIRK_SHL (A,PS,CPS,SPS,X_SC,X,Y,Z,BX,BY,BZ)
 C
          IMPLICIT  REAL * 8  (A - H, O - Z)
          DIMENSION A(86)
+         DIMENSION PA(3),QA(3),CYPIA(3),SYPIA(3),CYQIA(3),SYQIA(3)
+         DIMENSION RA(3),SA(3),SZRKA(3),CZRKA(3),CZSKA(3),SZSKA(3)
+         DIMENSION SQPRA(3,3),SQQSA(3,3),EPRA(3,3),EQSA(3,3)
 C
-         CPS=DCOS(PS)
-         SPS=DSIN(PS)
-
          S3PS=2.D0*CPS
 C
          PST1=PS*A(85)
@@ -1752,6 +1871,46 @@ C
          X2=X*CT2-Z*ST2
          Z2=X*ST2+Z*CT2
 C
+C   THE LOOP BELOW (M=1,2; I=1,3; K=1,3) USED TO RECOMPUTE CYPI/SYPI/CYQI/
+C   SYQI/SZRK/CZRK/CZSK/SZSK/SQPR/SQQS/EPR/EQS FRESH ON EVERY (M,I,K)
+C   COMBINATION, EVEN THOUGH NONE OF THEM ACTUALLY DEPEND ON M (ONLY THE
+C   M=1 BRANCH USES THE P/R-BASED ONES AND THE M=2 BRANCH USES THE Q/S-BASED
+C   ONES), AND SZRK/CZRK/CZSK/SZSK DON'T EVEN DEPEND ON I. THEY ARE
+C   PRECOMPUTED ONCE HERE, INDEXED BY I AND/OR K, AND REUSED BELOW -
+C   SAME FORMULAS, SAME VALUES, JUST NOT RECOMPUTED REDUNDANTLY.
+C   (THE LOOPS ARE MARKED "NOVECTOR" SO THE COMPILER EVALUATES EACH
+C   DSIN/DCOS/DSQRT/DEXP CALL WITH THE SAME SCALAR LIBM ROUTINE THE
+C   ORIGINAL CODE USED, RATHER THAN A VECTORIZED LIBM VARIANT THAT CAN
+C   ROUND DIFFERENTLY IN ITS LAST BIT - THIS KEEPS THE OUTPUT BIT-FOR-BIT
+C   IDENTICAL TO THE PRE-OPTIMIZATION VERSION.)
+C
+         DO 10 I=1,3
+            PA(I)=A(72+I)
+            QA(I)=A(78+I)
+            CYPIA(I)=DCOS(Y/PA(I))
+            SYPIA(I)=DSIN(Y/PA(I))
+            CYQIA(I)=DCOS(Y/QA(I))
+            SYQIA(I)=DSIN(Y/QA(I))
+  10     CONTINUE
+C
+         DO 11 K=1,3
+            RA(K)=A(75+K)
+            SA(K)=A(81+K)
+            SZRKA(K)=DSIN(Z1/RA(K))
+            CZRKA(K)=DCOS(Z1/RA(K))
+            CZSKA(K)=DCOS(Z2/SA(K))
+            SZSKA(K)=DSIN(Z2/SA(K))
+  11     CONTINUE
+C
+         DO 12 I=1,3
+           DO 13 K=1,3
+             SQPRA(I,K)=DSQRT(1.D0/PA(I)**2+1.D0/RA(K)**2)
+             SQQSA(I,K)=DSQRT(1.D0/QA(I)**2+1.D0/SA(K)**2)
+             EPRA(I,K)=DEXP(X1*SQPRA(I,K))
+             EQSA(I,K)=DEXP(X2*SQQSA(I,K))
+  13       CONTINUE
+  12     CONTINUE
+C
          L=0
          GX=0.D0
          GY=0.D0
@@ -1760,24 +1919,24 @@ C
          DO 1 M=1,2     !    M=1 IS FOR THE 1ST SUM ("PERP." SYMMETRY)
 C                          AND M=2 IS FOR THE SECOND SUM ("PARALL." SYMMETRY)
              DO 2 I=1,3
-                  P=A(72+I)
-                  Q=A(78+I)
-                  CYPI=DCOS(Y/P)
-                  CYQI=DCOS(Y/Q)
-                  SYPI=DSIN(Y/P)
-                  SYQI=DSIN(Y/Q)
+                  P=PA(I)
+                  Q=QA(I)
+                  CYPI=CYPIA(I)
+                  CYQI=CYQIA(I)
+                  SYPI=SYPIA(I)
+                  SYQI=SYQIA(I)
 C
                 DO 3 K=1,3
-                   R=A(75+K)
-                   S=A(81+K)
-                   SZRK=DSIN(Z1/R)
-                   CZSK=DCOS(Z2/S)
-                   CZRK=DCOS(Z1/R)
-                   SZSK=DSIN(Z2/S)
-                     SQPR=DSQRT(1.D0/P**2+1.D0/R**2)
-                     SQQS=DSQRT(1.D0/Q**2+1.D0/S**2)
-                        EPR=DEXP(X1*SQPR)
-                        EQS=DEXP(X2*SQQS)
+                   R=RA(K)
+                   S=SA(K)
+                   SZRK=SZRKA(K)
+                   CZSK=CZSKA(K)
+                   CZRK=CZRKA(K)
+                   SZSK=SZSKA(K)
+                     SQPR=SQPRA(I,K)
+                     SQQS=SQQSA(I,K)
+                        EPR=EPRA(I,K)
+                        EQS=EQSA(I,K)
 C
                   DO 4 N=1,2  ! N=1 IS FOR THE FIRST PART OF EACH COEFFICIENT
 C                                AND N=2 IS FOR THE SECOND ONE
@@ -1867,7 +2026,7 @@ C                                         TO TAKE INTO ACCOUNT THE SCALE FACTOR 
 C
 C************************************************************************************
 C
-      SUBROUTINE RMCO_FULL_RC (IOPR,PS,X,Y,Z,BXSRC,BYSRC,BZSRC,
+      SUBROUTINE RMCO_FULL_RC (IOPR,PS,CPS,SPS,X,Y,Z,BXSRC,BYSRC,BZSRC,
      *  BXPRC,BYPRC,BZPRC)
 C
 C   CALCULATES GSM FIELD COMPONENTS OF THE SYMMETRIC (SRC) AND PARTIAL (PRC) COMPONENTS OF THE RING CURRENT
@@ -1931,12 +2090,12 @@ C
 
         SC_PR = SC_AS
 
-        CALL RMCO_SRC_PRC (IOPR,SC_SY,SC_PR,PHI,PS,X,Y,Z,
+        CALL RMCO_SRC_PRC (IOPR,SC_SY,SC_PR,PHI,PS,CPS,SPS,X,Y,Z,
      *      HXSRC,HYSRC,HZSRC,HXPRC,HYPRC,HZPRC)
 
         X_SC=SC_SY-1.D0
         IF (IOPR.EQ.0.OR.IOPR.EQ.1) THEN
-          CALL RMCO_RC_SHIELD (C_SY,PS,X_SC,X,Y,Z,FSX,FSY,FSZ)
+          CALL RMCO_RC_SHIELD (C_SY,PS,CPS,SPS,X_SC,X,Y,Z,FSX,FSY,FSZ)
         ELSE
            FSX=0.D0
            FSY=0.D0
@@ -1945,7 +2104,7 @@ C
 
         X_SC=SC_PR-1.D0
         IF (IOPR.EQ.0.OR.IOPR.EQ.2) THEN
-          CALL RMCO_RC_SHIELD (C_PR,PS,X_SC,X,Y,Z,FPX,FPY,FPZ)
+          CALL RMCO_RC_SHIELD (C_PR,PS,CPS,SPS,X_SC,X,Y,Z,FPX,FPY,FPZ)
         ELSE
            FPX=0.D0
            FPY=0.D0
@@ -1964,7 +2123,7 @@ C
         END
 C---------------------------------------------------------------------------------------
 C
-       SUBROUTINE RMCO_SRC_PRC (IOPR,SC_SY,SC_PR,PHI,PS,X,Y,Z,
+       SUBROUTINE RMCO_SRC_PRC (IOPR,SC_SY,SC_PR,PHI,PS,CPS,SPS,X,Y,Z,
      *    BXSRC,BYSRC,BZSRC,BXPRC,BYPRC,BZPRC)
 C
 C   RETURNS FIELD COMPONENTS FROM A MODEL RING CURRENT, INCLUDING ITS SYMMETRIC PART
@@ -1986,9 +2145,6 @@ C
 c
 c   1.  TRANSFORM TO TILTED COORDINATES (i.e., SM coordinates):
 C
-        CPS=DCOS(PS)
-        SPS=DSIN(PS)
-
         XT=X*CPS-Z*SPS
         ZT=Z*CPS+X*SPS
 C
@@ -2552,7 +2708,7 @@ C
 C||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 C
 C
-         SUBROUTINE RMCO_RC_SHIELD (A,PS,X_SC,X,Y,Z,BX,BY,BZ)
+         SUBROUTINE RMCO_RC_SHIELD (A,PS,CPS,SPS,X_SC,X,Y,Z,BX,BY,BZ)
 C
 C   COMPUTES THE COMPONENTS OF THE SHIELDING FIELD FOR THE RING CURRENT
 C       (EITHER PARTIAL OR AXISYMMETRICAL)
@@ -2565,12 +2721,12 @@ C   OUTPUT:  BX,BY,BZ - SHIELDING FIELD COMPONENTS (GSM)
 C
          IMPLICIT  REAL * 8  (A - H, O - Z)
          DIMENSION A(86)
+         DIMENSION PA(3),QA(3),CYPIA(3),SYPIA(3),CYQIA(3),SYQIA(3)
+         DIMENSION RA(3),SA(3),SZRKA(3),CZRKA(3),CZSKA(3),SZSKA(3)
+         DIMENSION SQPRA(3,3),SQQSA(3,3),EPRA(3,3),EQSA(3,3)
 C
          FAC_SC=(X_SC+1.D0)**3
 C
-         CPS=DCOS(PS)
-         SPS=DSIN(PS)
-
          S3PS=2.D0*CPS
 C
          PST1=PS*A(85)
@@ -2586,6 +2742,45 @@ C
          X2=X*CT2-Z*ST2
          Z2=X*ST2+Z*CT2
 C
+C   SEE THE MATCHING COMMENT IN RMCO_BIRK_SHL: THE LOOP BELOW USED TO
+C   RECOMPUTE CYPI/SYPI/CYQI/SYQI/SZRK/CZRK/CZSK/SZSK/SQPR/SQQS/EPR/EQS
+C   FRESH ON EVERY (M,I,K) COMBINATION EVEN THOUGH NONE OF THEM DEPEND ON
+C   M, AND SZRK/CZRK/CZSK/SZSK DON'T EVEN DEPEND ON I. THEY ARE
+C   PRECOMPUTED ONCE HERE, INDEXED BY I AND/OR K, AND REUSED BELOW -
+C   SAME FORMULAS, SAME VALUES, JUST NOT RECOMPUTED REDUNDANTLY.
+C   (THE LOOPS ARE MARKED "NOVECTOR" SO THE COMPILER EVALUATES EACH
+C   DSIN/DCOS/DSQRT/DEXP CALL WITH THE SAME SCALAR LIBM ROUTINE THE
+C   ORIGINAL CODE USED, RATHER THAN A VECTORIZED LIBM VARIANT THAT CAN
+C   ROUND DIFFERENTLY IN ITS LAST BIT - THIS KEEPS THE OUTPUT BIT-FOR-BIT
+C   IDENTICAL TO THE PRE-OPTIMIZATION VERSION.)
+C
+         DO 10 I=1,3
+            PA(I)=A(72+I)
+            QA(I)=A(78+I)
+            CYPIA(I)=DCOS(Y/PA(I))
+            SYPIA(I)=DSIN(Y/PA(I))
+            CYQIA(I)=DCOS(Y/QA(I))
+            SYQIA(I)=DSIN(Y/QA(I))
+  10     CONTINUE
+C
+         DO 11 K=1,3
+            RA(K)=A(75+K)
+            SA(K)=A(81+K)
+            SZRKA(K)=DSIN(Z1/RA(K))
+            CZRKA(K)=DCOS(Z1/RA(K))
+            CZSKA(K)=DCOS(Z2/SA(K))
+            SZSKA(K)=DSIN(Z2/SA(K))
+  11     CONTINUE
+C
+         DO 12 I=1,3
+           DO 13 K=1,3
+             SQPRA(I,K)=DSQRT(1.D0/PA(I)**2+1.D0/RA(K)**2)
+             SQQSA(I,K)=DSQRT(1.D0/QA(I)**2+1.D0/SA(K)**2)
+             EPRA(I,K)=DEXP(X1*SQPRA(I,K))
+             EQSA(I,K)=DEXP(X2*SQQSA(I,K))
+  13       CONTINUE
+  12     CONTINUE
+C
          L=0
          GX=0.D0
          GY=0.D0
@@ -2594,24 +2789,24 @@ C
          DO 1 M=1,2     !    M=1 IS FOR THE 1ST SUM ("PERP." SYMMETRY)
 C                           AND M=2 IS FOR THE SECOND SUM ("PARALL." SYMMETRY)
              DO 2 I=1,3
-                  P=A(72+I)
-                  Q=A(78+I)
-                  CYPI=DCOS(Y/P)
-                  CYQI=DCOS(Y/Q)
-                  SYPI=DSIN(Y/P)
-                  SYQI=DSIN(Y/Q)
+                  P=PA(I)
+                  Q=QA(I)
+                  CYPI=CYPIA(I)
+                  CYQI=CYQIA(I)
+                  SYPI=SYPIA(I)
+                  SYQI=SYQIA(I)
 C
                 DO 3 K=1,3
-                   R=A(75+K)
-                   S=A(81+K)
-                   SZRK=DSIN(Z1/R)
-                   CZSK=DCOS(Z2/S)
-                   CZRK=DCOS(Z1/R)
-                   SZSK=DSIN(Z2/S)
-                     SQPR=DSQRT(1.D0/P**2+1.D0/R**2)
-                     SQQS=DSQRT(1.D0/Q**2+1.D0/S**2)
-                        EPR=DEXP(X1*SQPR)
-                        EQS=DEXP(X2*SQQS)
+                   R=RA(K)
+                   S=SA(K)
+                   SZRK=SZRKA(K)
+                   CZSK=CZSKA(K)
+                   CZRK=CZRKA(K)
+                   SZSK=SZSKA(K)
+                     SQPR=SQPRA(I,K)
+                     SQQS=SQQSA(I,K)
+                        EPR=EPRA(I,K)
+                        EQS=EQSA(I,K)
 C
                   DO 4 N=1,2  ! N=1 IS FOR THE FIRST PART OF EACH COEFFICIENT
 C                                AND N=2 IS FOR THE SECOND ONE
@@ -2700,7 +2895,7 @@ C                                         TO TAKE INTO ACCOUNT THE SCALE FACTOR 
 C
 c===========================================================================
 c
-      SUBROUTINE RMCO_DIPOLE (PS,X,Y,Z,BX,BY,BZ)
+      SUBROUTINE RMCO_DIPOLE (PS,CPS,SPS,X,Y,Z,BX,BY,BZ)
 C
 C     THIS IS A DOUBLE PRECISION ROUTINE, OTHERWISE IDENTICAL TO THE S/R DIP OF GEOPACK
 C
@@ -2727,8 +2922,8 @@ C
 c      SAVE M,PSI
 c      DATA M,PSI/0,5.D0/
 c      IF(M.EQ.1.AND.DABS(PS-PSI).LT.1.D-5) GOTO 1   !   THIS IS TO AVOID MULTIPLE CALCULATIONS
-      SPS=DSIN(PS)                                  !   OF SIN(PS) AND COS(PS), IF THE ANGLE PS
-      CPS=DCOS(PS)                                  !   REMAINS UNCHANGED
+                                                     !   OF SIN(PS) AND COS(PS), IF THE ANGLE PS
+                                                     !   REMAINS UNCHANGED (NOW PASSED IN BY CALLER)
       PSI=PS
       M=1
       P=X**2
@@ -2744,7 +2939,7 @@ c      Q=30115.D0/DSQRT(P+T+U)**5
       END
 
 c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      SUBROUTINE RMCO_MAGNETOPAUSE_2001 (PDYN,PS,X,Y,Z,SIGMA)
+      SUBROUTINE RMCO_MAGNETOPAUSE_2001 (PDYN,PS,SPS,X,Y,Z,SIGMA)
       
       USE TSY01_WHERE_IN_MAGNETOPAUSE2001
       IMPLICIT REAL*8 (A-H,O-Z)
@@ -2764,8 +2959,6 @@ c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
      
       XAPPA=(PDYN/2.)**A(39)   !  NOW THIS IS A VARIABLE PARAMETER
       RH0=A(40)
-           
-      SPS=DSIN(PS)
       
       X0=A0_X0/XAPPA
       AM=A0_A/XAPPA

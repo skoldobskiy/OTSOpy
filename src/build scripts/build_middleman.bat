@@ -1,4 +1,3 @@
-```bat
 @echo off
 setlocal EnableDelayedExpansion
 
@@ -869,4 +868,3 @@ echo.
 call conda deactivate >nul 2>&1
 
 goto :eof
-```

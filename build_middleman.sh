@@ -60,8 +60,8 @@ python3 -m numpy.f2py \
 -c \
 --backend=meson \
 --opt="-O3" \
---f90flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off" \
---f77flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off" \
+--f90flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off -fno-tree-slp-vectorize -fno-math-errno" \
+--f77flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off -fno-tree-slp-vectorize -fno-math-errno" \
 MiddleMan.f95 \
 SolarWindModule.f95 \
 SharedParameters.f95 \
@@ -97,9 +97,13 @@ Termination_checks.f95 \
 Acceleration.f95 \
 TSYmodules.f95 \
 T96.f \
+T96_Legacy.f \
 Tsyg_01.for \
+Tsyg_01_Legacy.for \
 t01_s.f \
+t01_s_Legacy.f \
 Tsyganenko04.f \
+Tsyganenko04_Legacy.f \
 TSY15_N.f \
 TSY15_B.f \
 TA16_RBF.f \

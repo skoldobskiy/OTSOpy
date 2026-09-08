@@ -53,6 +53,7 @@ class TrajectoryData:
     internalmag: str
     externalmag: str
     boberg: bool
+    optimise_tsy: bool
     bobergtype: str
     intmodel: str
     coordsystem: str
@@ -64,6 +65,7 @@ class TrajectoryData:
     h: Sequence[float]
     MHDfile: str
     MHDcoordsys: str
+    MHDgridtype: str
     spheresize: float
     inputcoord: str
     Verbose: bool

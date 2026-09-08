@@ -262,9 +262,46 @@ function function96(x, secondTotal) ! Tsyganenko 1996
     TSYGSM=TSYGSM1
     end if
     function96 = TSYGSM
-  
+
     return
 end function function96
+
+function function96_legacy(x, secondTotal) ! Tsyganenko 1996 (unoptimised code path)
+! Identical to function96, except it calls T96_01_LEGACY (T96_Legacy.f's entry
+! point, structurally unoptimised) instead of the optimised T96_01. Selected when
+! optimise_tsy is False. Both T96_01 and T96_01_LEGACY produce numerically identical
+! output (a latent bug - CONDIP1 missing a USE statement for module TSY96_DX1,
+! leaving DX/SCALEIN/SCALEOUT uninitialised - has been fixed in both), so this only
+! affects speed, not results.
+    real(8) :: function96_legacy(3), TSYGSM(3), TSYGSM1(3)
+    real(8), intent (in) :: x(3)
+    real(8), intent (in) :: secondTotal
+    real(8), dimension(10) :: parmod2
+    real(8) :: GSMx(3), PSItemp, TSYfield(3)
+
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) then
+     call CoordinateTransform("GEO", "GSM", year, day, secondTotal, x, x)
+    end if
+
+    parmod2 = real(parmod,4)
+    GSMx(1) = real(x(1),4)
+    GSMx(2) = real(x(2),4)
+    GSMx(3) = real(x(3),4)
+    PSItemp = real(PSI,8)
+
+    call T96_01_LEGACY(IOPT, parmod2, PSItemp, GSMx(1), GSMx(2), GSMx(3), TSYfield(1), TSYfield(2), TSYfield(3))
+    TSYGSM1(1) = TSYfield(1)
+    TSYGSM1(2) = TSYfield(2)
+    TSYGSM1(3) = TSYfield(3)
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) THEN
+    call CoordinateTransformVec("GSM", "GEO", year, day, secondTotal, TSYGSM1, TSYGSM)
+    else
+    TSYGSM=TSYGSM1
+    end if
+    function96_legacy = TSYGSM
+
+    return
+end function function96_legacy
 
 function function01(x, secondTotal) ! Tsyganenko 2001
     real(8) :: function01(3), TSYGSM(3), TSYGSM1(3)
@@ -293,9 +330,45 @@ function function01(x, secondTotal) ! Tsyganenko 2001
     TSYGSM=TSYGSM1
     end if
     function01 = TSYGSM
-    
+
     return
 end function function01
+
+function function01_legacy(x, secondTotal) ! Tsyganenko 2001 (unoptimised code path)
+! Identical to function01, except it calls T01_01_LEGACY (Tsyg_01_Legacy.for's entry
+! point, structurally unoptimised) instead of the optimised T01_01. Selected when
+! optimise_tsy is False. Both T01_01 and T01_01_LEGACY produce numerically identical
+! output (the same latent bug - an uninitialised variable in the tail-field warping
+! term - has been fixed in both), so this only affects speed, not results.
+    real(8) :: function01_legacy(3), TSYGSM(3), TSYGSM1(3)
+    real(8), intent (in) :: x(3)
+    real(8), intent (in) :: secondTotal
+    real, dimension(10) :: parmod2
+    real :: GSMx(3), PSItemp, TSYfield(3)
+
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) then
+     call CoordinateTransform("GEO", "GSM", year, day, secondTotal, x, x)
+    end if
+
+    parmod2 = real(parmod,4)
+    GSMx(1) = real(x(1),4)
+    GSMx(2) = real(x(2),4)
+    GSMx(3) = real(x(3),4)
+    PSItemp = real(PSI,8)
+
+    call T01_01_LEGACY(IOPT, parmod2, GSMx(1), GSMx(2), GSMx(3), TSYfield(1), TSYfield(2), TSYfield(3))
+    TSYGSM1(1) = TSYfield(1)
+    TSYGSM1(2) = TSYfield(2)
+    TSYGSM1(3) = TSYfield(3)
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) THEN
+    call CoordinateTransformVec("GSM", "GEO", year, day, secondTotal, TSYGSM1, TSYGSM)
+    else
+    TSYGSM=TSYGSM1
+    end if
+    function01_legacy = TSYGSM
+
+    return
+end function function01_legacy
 
 function function01S(x, secondTotal) ! Tsyganenko 2001 storm-time variation
     real(8) :: function01S(3), TSYGSM(3), TSYGSM1(3)
@@ -316,9 +389,37 @@ function function01S(x, secondTotal) ! Tsyganenko 2001 storm-time variation
     TSYGSM=TSYGSM1
     end if
     function01S = TSYGSM
-  
+
     return
 end function function01S
+
+function function01S_legacy(x, secondTotal) ! Tsyganenko 2001 storm-time variation (unoptimised code path)
+! Identical to function01S, except it calls T01_S_LEGACY (t01_s_Legacy.f's entry point,
+! structurally unoptimised) instead of the optimised T01_S. Selected when optimise_tsy
+! is False. Both T01_S and T01_S_LEGACY produce numerically identical output (the same
+! latent bug - an unreliable uninitialised-variable cache guard in the dipole shielding
+! term - has been fixed in both), so this only affects speed, not results.
+    real(8) :: function01S_legacy(3), TSYGSM(3), TSYGSM1(3)
+    real(8) :: PSItemp
+    real(8), intent (in) :: x(3)
+    real(8), intent (in) :: secondTotal
+
+    PSItemp = real(PSI,8)
+
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) then
+     call CoordinateTransform("GEO", "GSM", year, day, secondTotal, x, x)
+    end if
+
+    call T01_S_LEGACY(parmod, PSItemp, x(1), x(2), x(3), TSYGSM1(1), TSYGSM1(2), TSYGSM1(3))
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) THEN
+    call CoordinateTransformVec("GSM", "GEO", year, day, secondTotal, TSYGSM1, TSYGSM)
+    else
+    TSYGSM=TSYGSM1
+    end if
+    function01S_legacy = TSYGSM
+
+    return
+end function function01S_legacy
 
 function function04(x, secondTotal) ! Tsyganenko 2004 
     real(8) :: function04(3), TSYGSM(3), TSYGSM1(3)
@@ -339,9 +440,36 @@ function function04(x, secondTotal) ! Tsyganenko 2004
     TSYGSM=TSYGSM1
     end if
     function04 = TSYGSM
-  
+
     return
 end function function04
+
+function function04_legacy(x, secondTotal) ! Tsyganenko 2004 (unoptimised code path)
+! Identical to function04, except it calls T04_S_LEGACY (Tsyganenko04_Legacy.f's entry
+! point, structurally unoptimised) instead of the optimised T04_S. Selected when
+! optimise_tsy is False. Both produce numerically identical output, so this only
+! affects speed, not results.
+    real(8) :: function04_legacy(3), TSYGSM(3), TSYGSM1(3)
+    real(8) :: PSItemp
+    real(8), intent (in) :: x(3)
+    real(8), intent (in) :: secondTotal
+
+    PSItemp = real(PSI,8)
+
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) then
+     call CoordinateTransform("GEO", "GSM", year, day, secondTotal, x, x)
+    end if
+
+    call T04_S_LEGACY(parmod, PSItemp, x(1), x(2), x(3), TSYGSM1(1), TSYGSM1(2), TSYGSM1(3))
+    if (model(1) == 4 .or. model(1) == 1 .or. model(1) == 5) THEN
+    call CoordinateTransformVec("GSM", "GEO", year, day, secondTotal, TSYGSM1, TSYGSM)
+    else
+    TSYGSM=TSYGSM1
+    end if
+    function04_legacy = TSYGSM
+
+    return
+end function function04_legacy
 
 
 function function15N(x, secondTotal) ! Tsyganenko 2015 N-index 
@@ -485,13 +613,29 @@ end function functionMHD
   ELSE IF (mode(2) == 3) THEN
     ExternalMagPointer => function89a   ! TSYGANENKO 89a
   ELSE IF (mode(2) == 4) THEN
-    ExternalMagPointer => function96   ! TSYGANENKO 96
+    IF (optimise_tsy) THEN
+      ExternalMagPointer => function96        ! TSYGANENKO 96 (optimised + bugfixed)
+    ELSE
+      ExternalMagPointer => function96_legacy ! TSYGANENKO 96 (original, for reproducibility)
+    END IF
   ELSE IF (mode(2) == 5) THEN
-    ExternalMagPointer => function01   ! TSYGANENKO 01
+    IF (optimise_tsy) THEN
+      ExternalMagPointer => function01        ! TSYGANENKO 01 (optimised + bugfixed)
+    ELSE
+      ExternalMagPointer => function01_legacy ! TSYGANENKO 01 (original, for reproducibility)
+    END IF
   ELSE IF (mode(2) == 6) THEN
-    ExternalMagPointer => function01S  ! TSYGANENKO 01 STORM
+    IF (optimise_tsy) THEN
+      ExternalMagPointer => function01S        ! TSYGANENKO 01 STORM (optimised + bugfixed)
+    ELSE
+      ExternalMagPointer => function01S_legacy ! TSYGANENKO 01 STORM (original, for reproducibility)
+    END IF
   ELSE IF (mode(2) == 7) THEN
-    ExternalMagPointer => function04  ! TSYGANENKO 04
+    IF (optimise_tsy) THEN
+      ExternalMagPointer => function04        ! TSYGANENKO 04 (optimised)
+    ELSE
+      ExternalMagPointer => function04_legacy ! TSYGANENKO 04 (original, for reproducibility)
+    END IF
   ELSE IF (mode(2) == 8) THEN
     ExternalMagPointer => function89c   ! TSYGANENKO 89c
   ELSE IF (mode(2) == 9) THEN

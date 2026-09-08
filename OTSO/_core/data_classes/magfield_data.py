@@ -42,6 +42,7 @@ class MagfieldData:
     internalmag: str
     externalmag: str
     boberg: bool
+    optimise_tsy: bool
     bobergtype: str
     inputcoord: str
     coordout: str
@@ -50,6 +51,7 @@ class MagfieldData:
     corenum: int
     MHDfile: str
     MHDcoordsys: str
+    MHDgridtype: str
     Verbose: bool
     max_degree: int
 

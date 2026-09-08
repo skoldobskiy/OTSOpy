@@ -915,6 +915,36 @@ subroutine f90wrap_fortrandata__set__trapdistcheck(this, f90wrap_trapdistcheck)
     this_ptr%p%trapdistcheck = f90wrap_trapdistcheck
 end subroutine f90wrap_fortrandata__set__trapdistcheck
 
+subroutine f90wrap_fortrandata__get__optimise_tsy(this, f90wrap_optimise_tsy)
+    use middleman
+    use, intrinsic :: iso_c_binding, only: c_int
+    implicit none
+    type fortrandata_ptr_type
+        type(fortrandata), pointer :: p => NULL()
+    end type fortrandata_ptr_type
+    integer(c_int), intent(in)   :: this(4)
+    type(FortranData_ptr_type) :: this_ptr
+    logical, intent(out) :: f90wrap_optimise_tsy
+    
+    this_ptr = transfer(this, this_ptr)
+    f90wrap_optimise_tsy = this_ptr%p%optimise_tsy
+end subroutine f90wrap_fortrandata__get__optimise_tsy
+
+subroutine f90wrap_fortrandata__set__optimise_tsy(this, f90wrap_optimise_tsy)
+    use middleman
+    use, intrinsic :: iso_c_binding, only: c_int
+    implicit none
+    type fortrandata_ptr_type
+        type(fortrandata), pointer :: p => NULL()
+    end type fortrandata_ptr_type
+    integer(c_int), intent(in)   :: this(4)
+    type(FortranData_ptr_type) :: this_ptr
+    logical, intent(in) :: f90wrap_optimise_tsy
+    
+    this_ptr = transfer(this, this_ptr)
+    this_ptr%p%optimise_tsy = f90wrap_optimise_tsy
+end subroutine f90wrap_fortrandata__set__optimise_tsy
+
 subroutine f90wrap_middleman__fortrandata_initialise(this)
     use middleman
     use, intrinsic :: iso_c_binding, only: c_int
@@ -2231,7 +2261,7 @@ end subroutine f90wrap_middleman__fieldtrace
 subroutine f90wrap_middleman__mhdstartupsorted(f90wrap_n0, f90wrap_n1, f90wrap_n2, f90wrap_n3, f90wrap_n4, f90wrap_n5, &
     f90wrap_n6, f90wrap_n7, f90wrap_n8, f90wrap_n9, f90wrap_n10, f90wrap_n11, f90wrap_n12, f90wrap_n13, f90wrap_n14, &
     f90wrap_n15, xu, yu, zu, mhdposition_in, mhdb_in, nx_split, ny_split, nz_split, mix, max_bn, miy, may, miz, maz, &
-    region_order_in, start_x, end_x, start_y, end_y, start_z, end_z, num_regions, xulen, yulen, zulen)
+    region_order_in, start_x, end_x, start_y, end_y, start_z, end_z, num_regions, xulen, yulen, zulen, uniform_grid)
     use middleman
     implicit none
     
@@ -2292,10 +2322,11 @@ subroutine f90wrap_middleman__mhdstartupsorted(f90wrap_n0, f90wrap_n1, f90wrap_n
     integer(4) :: xulen
     integer(4) :: yulen
     integer(4) :: zulen
+    logical :: uniform_grid
     call MHDstartupSorted(XU=xu, YU=yu, ZU=zu, MHDposition_in=mhdposition_in, MHDB_in=mhdb_in, nx_split=nx_split, &
         ny_split=ny_split, nz_split=nz_split, mix=mix, max=max_bn, miy=miy, may=may, miz=miz, maz=maz, &
         region_order_in=region_order_in, start_x=start_x, end_x=end_x, start_y=start_y, end_y=end_y, start_z=start_z, &
-        end_z=end_z, num_regions=num_regions, XUlen=xulen, YUlen=yulen, ZUlen=zulen)
+        end_z=end_z, num_regions=num_regions, XUlen=xulen, YUlen=yulen, ZUlen=zulen, uniform_grid=uniform_grid)
 end subroutine f90wrap_middleman__mhdstartupsorted
 
 subroutine f90wrap_middleman__gse2gswtsy15(f90wrap_n0, f90wrap_n1, date, position_gse, wind, gotso, hotso, glen, &

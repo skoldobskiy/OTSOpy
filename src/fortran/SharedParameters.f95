@@ -32,6 +32,7 @@ module SharedParameters
     logical :: adaptivestep
     logical :: totalbetacheck
     logical :: trapdistcheck
+    logical :: optimise_tsy
 
     real(8) :: CurrentGyro
 

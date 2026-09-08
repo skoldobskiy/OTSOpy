@@ -192,72 +192,29 @@ jobs:
         echo "Building MiddleMan extension with meson backend..."
         python -c "import sys; print(f'Python version: {sys.version}')"
         python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
-        
+
         # Use meson backend for all builds
         f90wrap -m MiddleMan MiddleMan.f95
         WRAPPERS=$(ls f90wrap*.f90 2>/dev/null)
+
+        # Source file list is read from fortran_files.txt (single source of
+        # truth, shared with build_middleman.sh and the Windows build script)
+        # instead of being duplicated here, so a new/renamed source only ever
+        # needs updating in one place.
+        FILES=$(cat fortran_files.txt | tr '\n' ' ')
+        echo "Building with files from fortran_files.txt: $FILES"
+
         python -m numpy.f2py \
         -c \
         --backend=meson \
         --opt="-O3" \
-        --f90flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off" \
-        --f77flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off" \
-        MiddleMan.f95 \
-        SolarWindModule.f95 \
-        SharedParameters.f95 \
-        GEOPACK_DP.f \
-        GeopackModule.f95 \
-        CustomGaussModule.f95 \
-        old_commonsModule.f95 \
-        Particle.f95 \
-        Conversion.f95 \
-        Velocity.f95 \
-        CoordinateTransforms.f95 \
-        CoordTrans.for \
-        onera_desp_lib.f \
-        init_nouveau.f \
-        heliospheric_transformation.f \
-        date_util.f \
-        igrf_coef.f \
-        MagneticFieldFunctions.f95 \
-        Tsyganenko87l.f \
-        Tsyganenko87s.f \
-        TSY89_refit.f95 \
-        TSY89a.f95 \
-        TSY89c.f95 \
-        MagneticField.f95 \
-        MagnetopauseFunctions.f95 \
-        MagnetopauseModule.f95 \
-        IntegrationFunctions.f95 \
-        VectorCalc.f95 \
-        integration_utils.f95 \
-        LorentzRelativity.f95 \
-        Asymptotic.f95 \
-        Termination_checks.f95 \
-        Acceleration.f95 \
-        TSYmodules.f95 \
-        T96.f \
-        Tsyg_01.for \
-        t01_s.f \
-        Tsyganenko04.f \
-        TSY15_N.f \
-        TSY15_B.f \
-        TA16_RBF.f \
-        MHDModule.f95 \
-        MHDBfield.f95 \
-        betachecking.f95 \
-        igrf14.f \
-        4RK.f95 \
-        5RK.f95 \
-        6RK.f95 \
-        Boris_Buneman.f95 \
-        Vay.f95 \
-        HC.f95 \
-        field_trace_boris.f95 \
+        --f90flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off -fno-tree-slp-vectorize -fno-math-errno" \
+        --f77flags="-O3 -fopenmp -fautomatic -frecursive -fno-fast-math -ffp-contract=off -fno-tree-slp-vectorize -fno-math-errno" \
+        $FILES \
         ${WRAPPERS} \
         -m "_MiddleMan" \
         -lgomp
-        
+
         echo "Build complete. Listing generated files:"
         ls -la _MiddleMan.*
         cd "$GITHUB_WORKSPACE"

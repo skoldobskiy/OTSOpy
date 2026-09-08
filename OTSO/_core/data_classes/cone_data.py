@@ -52,6 +52,7 @@ class ConeData:
     internalmag: str
     externalmag: str
     boberg: bool
+    optimise_tsy: bool
     bobergtype: str
     intmodel: str
     startrigidity: float
@@ -66,6 +67,7 @@ class ConeData:
     h: Sequence[float]
     MHDfile: str
     MHDcoordsys: str
+    MHDgridtype: str
     spheresize: float
     inputcoord: str
     Verbose: bool

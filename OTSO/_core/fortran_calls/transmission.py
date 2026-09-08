@@ -13,7 +13,7 @@ def FortranTransmission(Data: list, TransmissionDataInstance: TransmissionData, 
     cpu_util.set_process_affinity(cpus)
 
     if TransmissionDataInstance.model[1] == 99:
-        mhd_utils.MHDinitialise(TransmissionDataInstance.MHDfile)
+        mhd_utils.MHDinitialise(TransmissionDataInstance.MHDfile, TransmissionDataInstance.MHDgridtype)
 
     for x in Data:
 
